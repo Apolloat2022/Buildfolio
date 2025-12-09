@@ -1,4 +1,4 @@
-// app/projects/[slug]/page.tsx - USING CORRECT FIELD NAMES
+// app/projects/[slug]/page.tsx - USING REAL DATABASE STEPS
 import { prisma } from '@/lib/prisma'
 import { notFound } from 'next/navigation'
 import { auth } from '@/app/auth'
@@ -14,49 +14,29 @@ export default async function ProjectDetailPage({ params }: PageProps) {
   const { slug } = await params
   const session = await auth()
   
-  // Get project with expanded details - SIMPLE FIXED VERSION
+  // Get project with REAL database steps
   const project = await prisma.projectTemplate.findUnique({
     where: { slug },
     include: {
-      startedProjects: true, // ✅ Simple fix - include all
+      steps: {
+        orderBy: { order: 'asc' }  // Fetch structured steps in order
+      },
+      startedProjects: session?.user?.id ? {
+        where: { userId: session.user.id }
+      } : false,
     }
   })
 
   if (!project) notFound()
 
-  // Filter user's started project in JavaScript
-  const userStartedProject = project.startedProjects?.find(
-    sp => sp.userId === session?.user?.id
-  )
-
+  // User's progress for this project
+  const userStartedProject = project.startedProjects?.[0] || null
+  
   // Use actual database fields
   const timeEstimateDisplay = project.timeEstimate || 'N/A'
   const resumeStars = project.resumeImpact || 0
   const technologies = project.technologies || []
-  const steps = project.steps || []
-
-  // Expanded step details (would come from database)
-  const detailedSteps = [
-    {
-      title: "Project Setup & Authentication",
-      description: "Initialize the project with proper structure and user authentication",
-      codeSnippets: [
-        { language: 'bash', code: 'npx create-next-app@latest ecommerce-store --typescript --tailwind --app' },
-        { language: 'typescript', code: '// auth.ts - Authentication setup\nimport { NextAuth } from "next-auth"\nimport CredentialsProvider from "next-auth/providers/credentials"' }
-      ],
-      pitfalls: ["Don't forget environment variables", "Set up proper CORS policies"],
-      estimatedTime: "2 hours"
-    },
-    {
-      title: "Product Catalog & Database",
-      description: "Create product models and implement database schema",
-      codeSnippets: [
-        { language: 'prisma', code: 'model Product {\n  id String @id @default(cuid())\n  name String\n  price Decimal\n  description String?\n  category String\n}' }
-      ],
-      pitfalls: ["Normalize database properly", "Add proper indexes for performance"],
-      estimatedTime: "3 hours"
-    }
-  ]
+  const steps = project.steps || []  // REAL steps from database
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -83,7 +63,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
             </div>
             <ProgressTracker 
               totalSteps={steps.length}
-              completedSteps={userStartedProject?.progress || 0} // Use actual progress
+              completedSteps={userStartedProject?.progress || 0}
             />
           </div>
         </div>
@@ -91,17 +71,17 @@ export default async function ProjectDetailPage({ params }: PageProps) {
 
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left: Steps */}
+          {/* Left: Steps - USING REAL DATABASE STEPS */}
           <div className="lg:col-span-2 space-y-6">
-            {detailedSteps.map((step, index) => (
+            {steps.map((step) => (
               <InteractiveStep
-                key={index}
-                stepNumber={index + 1}
+                key={step.id}
+                stepNumber={step.order}
                 title={step.title}
-                description={step.description}
-                codeSnippets={step.codeSnippets}
-                pitfalls={step.pitfalls}
-                estimatedTime={step.estimatedTime}
+                description={step.description || ''}
+                codeSnippets={step.codeSnippets || []}
+                pitfalls={step.pitfalls || []}
+                estimatedTime={step.estimatedTime || 'Not specified'}
               />
             ))}
           </div>
