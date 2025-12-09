@@ -79,7 +79,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
                 stepNumber={step.order}
                 title={step.title}
                 description={step.description || ''}
-                codeSnippets={step.codeSnippets || []}
+                codeSnippets={(step.codeSnippets as Array<{ language: string; code: string }>) || []}
                 pitfalls={step.pitfalls || []}
                 estimatedTime={step.estimatedTime || 'Not specified'}
               />
