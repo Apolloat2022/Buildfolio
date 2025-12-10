@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma'
 import { auth } from '@/app/auth'
 import Link from 'next/link'
+import MarkCompleteButton from '@/components/MarkCompleteButton'
 
 interface PageProps {
   params: Promise<{ slug: string }>
@@ -44,7 +45,6 @@ export default async function ProjectDetailPage({ params }: PageProps) {
     const completedSteps = userStartedProject?.completedSteps || []
     const progress = userStartedProject?.progress || 0
     const steps = project.steps || []
-    const timeEstimate = project.timeEstimate || '25-30 hours'
     const technologies = project.technologies || []
     
     return (
@@ -94,7 +94,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
                     
                     <p className="text-gray-600 mb-4">{step.description}</p>
                     <p className="text-sm text-gray-500 mb-4">
-                      ⏱️ Estimated Time: {step.estimatedTime || 'Not specified'}
+                      ⏱️ {step.estimatedTime || 'Not specified'}
                     </p>
                     
                     {codeSnippets.length > 0 && (
@@ -122,24 +122,11 @@ export default async function ProjectDetailPage({ params }: PageProps) {
                     )}
                     
                     {session && (
-                      <button
-                        onClick={async () => {
-                          const action = isCompleted ? 'incomplete' : 'complete'
-                          await fetch('/api/progress', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ stepId: step.id, projectId: project.id, action }),
-                          })
-                          window.location.reload()
-                        }}
-                        className={`w-full py-2 px-4 rounded-lg font-medium ${
-                          isCompleted 
-                            ? 'bg-gray-200 text-gray-700 hover:bg-gray-300' 
-                            : 'bg-blue-600 text-white hover:bg-blue-700'
-                        }`}
-                      >
-                        {isCompleted ? 'Mark Incomplete' : 'Mark Complete'}
-                      </button>
+                      <MarkCompleteButton 
+                        stepId={step.id}
+                        projectId={project.id}
+                        isCompleted={isCompleted}
+                      />
                     )}
                   </div>
                 )
@@ -148,10 +135,10 @@ export default async function ProjectDetailPage({ params }: PageProps) {
 
             <div className="space-y-6">
               <div className="bg-white rounded-xl shadow-lg p-6">
-                <h3 className="text-lg font-bold text-gray-900 mb-4">🛠️ Technologies</h3>
+                <h3 className="text-lg font-bold mb-4">🛠️ Technologies</h3>
                 <div className="flex flex-wrap gap-2">
                   {technologies.map((tech, index) => (
-                    <span key={index} className="px-3 py-2 bg-blue-50 text-blue-700 rounded-lg text-sm font-medium">
+                    <span key={index} className="px-3 py-2 bg-blue-50 text-blue-700 rounded-lg text-sm">
                       {tech}
                     </span>
                   ))}
@@ -166,11 +153,8 @@ export default async function ProjectDetailPage({ params }: PageProps) {
   } catch (error) {
     return (
       <div className="p-8">
-        <h1 className="text-red-600 text-2xl font-bold">ERROR!</h1>
-        <pre className="bg-red-50 p-4 mt-4 rounded">
-          {error instanceof Error ? error.message : 'Unknown'}
-        </pre>
-        <pre className="text-xs mt-2">{error instanceof Error ? error.stack : ''}</pre>
+        <h1 className="text-red-600">ERROR!</h1>
+        <pre className="bg-red-50 p-4 mt-4">{error instanceof Error ? error.message : 'Unknown'}</pre>
       </div>
     )
   }
