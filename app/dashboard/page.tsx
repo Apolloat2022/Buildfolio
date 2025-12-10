@@ -1,161 +1,98 @@
-import { auth } from '@/app/auth'
-import { prisma } from '@/lib/prisma'
+﻿import { auth } from '@/app/auth'
 import { redirect } from 'next/navigation'
-import DashboardClient from './DashboardClient'
-
-// Define proper TypeScript interfaces
-interface UserProject {
-  id: string
-  title: string
-  description: string | null
-  status: string
-  tags: string[]
-  githubUrl: string | null
-  liveUrl: string | null
-  createdAt: Date
-  updatedAt: Date
-}
-
-interface StartedProjectWithTemplate {
-  id: string
-  userId: string
-  projectTemplateId: string
-  status: string
-  progress: number
-  completedSteps: string[]
-  startedAt: Date
-  lastActivityAt: Date
-  completedAt: Date | null
-  projectTemplate: {
-    id: string
-    title: string
-    slug: string
-    description: string | null
-    difficulty: string
-    steps: Array<{
-      id: string
-      order: number
-      title: string
-      description: string | null
-    }>
-  }
-}
+import { prisma } from '@/lib/prisma'
+import Link from 'next/link'
+import GamificationDashboard from '@/components/GamificationDashboard'
 
 export default async function DashboardPage() {
   const session = await auth()
-
-  // Redirect if not authenticated
+  
   if (!session?.user) {
     redirect('/auth/signin')
   }
 
-  // Wrap ALL data fetching in try-catch
-  let userProjects: UserProject[] = []
-  let startedProjects: StartedProjectWithTemplate[] = []
+  const startedProjects = await prisma.startedProject.findMany({
+    where: { userId: session.user.id },
+    include: {
+      projectTemplate: true
+    },
+    orderBy: { lastWorkedOn: 'desc' }
+  })
 
-  try {
-    // 1. User's personal portfolio projects (Project model)
-    userProjects = await prisma.project.findMany({
-      where: { userId: session.user.id },
-      orderBy: { createdAt: 'desc' },
-      select: {
-        id: true,
-        title: true,
-        description: true,
-        status: true,
-        tags: true,
-        githubUrl: true,
-        liveUrl: true,
-        createdAt: true,
-        updatedAt: true
-      }
-    })
-
-    // 2. User's tutorial progress (StartedProject model)
-    startedProjects = await prisma.startedProject.findMany({
-      where: { userId: session.user.id },
-      include: {
-        projectTemplate: {
-          include: {
-            steps: {
-              select: {
-                id: true,
-                order: true,
-                title: true,
-                description: true
-              },
-              orderBy: { order: 'asc' }
-            }
-          }
-        }
-      },
-      orderBy: { lastActivityAt: 'desc' }
-    })
-  } catch (dbError) {
-    console.error('Database error in dashboard:', dbError)
-    // Continue with empty arrays - dashboard will show "no data" state
-  }
-
-  // TRANSFORM DATA for personal projects
-  const transformedProjects = userProjects.map(project => ({
-    ...project,
-    githubUrl: project.githubUrl ?? undefined,
-    liveUrl: project.liveUrl ?? undefined,
-    description: project.description ?? '',
-  }))
-
-  // Calculate stats for personal projects
-  const personalProjectsStats = {
-    total: userProjects.length,
-    completed: userProjects.filter(p => p.status === 'completed').length,
-    inProgress: userProjects.filter(p => p.status === 'in-progress').length,
-    planned: userProjects.filter(p => p.status === 'planned').length
-  }
-
-  // Calculate tutorial progress stats (with fallback for missing data)
-  const totalStepsAvailable = startedProjects.reduce(
-    (acc, p) => acc + (p.projectTemplate?.steps?.length || 0),
-    0
-  )
-  
-  const tutorialStats = {
-    tutorialsStarted: startedProjects.length,
-    tutorialsCompleted: startedProjects.filter(p => p.progress === 100).length,
-    totalStepsCompleted: startedProjects.reduce(
-      (acc, p) => acc + p.completedSteps.length,
-      0
-    ),
-    totalStepsAvailable,
-    overallProgress: startedProjects.length > 0 
-      ? startedProjects.reduce((acc, p) => acc + p.progress, 0) / startedProjects.length
-      : 0
-  }
-
-  // Prepare data for DashboardClient
-  const clientStartedProjects = startedProjects.map(sp => ({
-    id: sp.id,
-    progress: sp.progress,
-    completedSteps: sp.completedSteps,
-    projectTemplate: {
-      id: sp.projectTemplate.id,
-      title: sp.projectTemplate.title,
-      slug: sp.projectTemplate.slug,
-      difficulty: sp.projectTemplate.difficulty,
-      steps: sp.projectTemplate.steps.map(step => ({
-        id: step.id,
-        title: step.title
-      }))
-    }
-  }))
-
-  // Combine data for DashboardClient
   return (
-    <DashboardClient
-      session={session}
-      initialProjects={transformedProjects}
-      startedProjects={clientStartedProjects}
-      stats={personalProjectsStats}
-      tutorialStats={tutorialStats}
-    />
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+          <p className="text-gray-600">Welcome back, {session.user.name || session.user.email}!</p>
+        </div>
+
+        {/* Gamification Dashboard */}
+        <div className="mb-8">
+          <GamificationDashboard />
+        </div>
+
+        {/* Your Projects */}
+        <div className="bg-white rounded-xl shadow-lg p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-gray-900">Your Projects</h2>
+            <Link 
+              href="/projects"
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            >
+              Browse All Projects
+            </Link>
+          </div>
+
+          {startedProjects.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-gray-500 mb-4">You haven't started any projects yet</p>
+              <Link 
+                href="/projects"
+                className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              >
+                Start Your First Project
+              </Link>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {startedProjects.map((sp) => (
+                <Link
+                  key={sp.id}
+                  href={`/projects/${sp.projectTemplate.slug}`}
+                  className="border-2 border-gray-200 rounded-lg p-6 hover:border-blue-500 hover:shadow-lg transition-all"
+                >
+                  <h3 className="font-bold text-lg mb-2">{sp.projectTemplate.title}</h3>
+                  <div className="mb-4">
+                    <div className="flex justify-between text-sm text-gray-600 mb-2">
+                      <span>Progress</span>
+                      <span>{sp.progress}%</span>
+                    </div>
+                    <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-blue-600 rounded-full transition-all"
+                        style={{ width: `${sp.progress}%` }}
+                      />
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className={`px-3 py-1 rounded-full ${
+                      sp.status === 'completed' ? 'bg-green-100 text-green-800' :
+                      sp.status === 'in-progress' ? 'bg-blue-100 text-blue-800' :
+                      'bg-gray-100 text-gray-800'
+                    }`}>
+                      {sp.status}
+                    </span>
+                    <span className="text-gray-500">
+                      {sp.completedSteps.length} steps done
+                    </span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
   )
 }

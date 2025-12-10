@@ -1,200 +1,104 @@
-// app/api/progress/route.ts - CORRECT IMPORTS FOR YOUR SETUP
-import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { auth } from '@/app/auth'; // ✅ Use 'auth' from your auth.ts
+// app/api/progress/route.ts - UPDATED VERSION
+import { prisma } from '@/lib/prisma'
+import { auth } from '@/app/auth'
+import { NextRequest, NextResponse } from 'next/server'
+import { updateUserStreak, awardPoints } from '@/lib/gamification'
 
-// GET: Fetch user progress for a project
-export async function GET(request: NextRequest) {
+export async function POST(req: NextRequest) {
   try {
-    const session = await auth(); // ✅ Use auth() directly
-    
-    if (!session?.user?.id) { // ✅ Use .id instead of .email since you have it
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const session = await auth()
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { searchParams } = new URL(request.url);
-    const projectId = searchParams.get('projectId');
+    const { stepId, projectId, action } = await req.json()
 
-    if (!projectId) {
-      return NextResponse.json({ error: 'Project ID required' }, { status: 400 });
-    }
-
-    // Get user - using userId from session
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id }
-    });
-    
-    if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
-    }
-
-    // Find user's progress for this project
-    const startedProject = await prisma.startedProject.findUnique({
-      where: {
-        userId_projectTemplateId: {
-          userId: user.id,
-          projectTemplateId: projectId
-        }
-      }
-    });
-
-    if (!startedProject) {
-      return NextResponse.json({ 
-        progress: 0, 
-        completedSteps: [] 
-      });
-    }
-
-    return NextResponse.json({
-      progress: startedProject.progress,
-      completedSteps: startedProject.completedSteps
-    });
-  } catch (error) {
-    console.error('GET Progress API error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' }, 
-      { status: 500 }
-    );
-  }
-}
-
-// POST: Update user progress
-export async function POST(request: NextRequest) {
-  try {
-    const session = await auth(); // ✅ Use auth() directly
-    
-    if (!session?.user?.id) { // ✅ Use .id from your session
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const { stepId, projectId, action } = await request.json();
-    
-    if (!stepId || !projectId || !action) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
-    }
-
-    // Get user - using userId from session
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id }
-    });
-    
-    if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
-    }
-
-    // Find or create StartedProject
+    // Find or create started project
     let startedProject = await prisma.startedProject.findUnique({
       where: {
         userId_projectTemplateId: {
-          userId: user.id,
+          userId: session.user.id,
           projectTemplateId: projectId
         }
+      },
+      include: {
+        projectTemplate: {
+          include: { steps: true }
+        }
       }
-    });
+    })
 
     if (!startedProject) {
       startedProject = await prisma.startedProject.create({
         data: {
-          userId: user.id,
+          userId: session.user.id,
           projectTemplateId: projectId,
-          completedSteps: [],
-          progress: 0
+          status: 'in-progress'
+        },
+        include: {
+          projectTemplate: {
+            include: { steps: true }
+          }
         }
-      });
+      })
     }
 
-    if (action === 'complete') {
-      // Add step to completedSteps if not already there
-      if (!startedProject.completedSteps.includes(stepId)) {
-        const updated = await prisma.startedProject.update({
-          where: {
-            userId_projectTemplateId: {
-              userId: user.id,
-              projectTemplateId: projectId
-            }
-          },
-          data: {
-            completedSteps: { push: stepId }
-          }
-        });
+    const currentCompleted = startedProject.completedSteps || []
+    let newCompleted: string[]
+    let pointsAwarded = 0
 
-        // Calculate progress percentage
-        const project = await prisma.projectTemplate.findUnique({
-          where: { id: projectId },
-          include: { steps: true }
-        });
-
-        const progress = project 
-          ? Math.round((updated.completedSteps.length / project.steps.length) * 100)
-          : 0;
-
-        // Update progress percentage
-        const finalUpdate = await prisma.startedProject.update({
-          where: {
-            userId_projectTemplateId: {
-              userId: user.id,
-              projectTemplateId: projectId
-            }
-          },
-          data: { progress }
-        });
-
-        return NextResponse.json({ 
-          success: true, 
-          progress: finalUpdate.progress,
-          completedSteps: finalUpdate.completedSteps 
-        });
-      }
-    } else if (action === 'incomplete') {
-      // Remove step from completedSteps
-      const updatedSteps = startedProject.completedSteps.filter(id => id !== stepId);
+    if (action === 'complete' && !currentCompleted.includes(stepId)) {
+      newCompleted = [...currentCompleted, stepId]
+      pointsAwarded = 50 // Base points for completing a step
       
-      const updated = await prisma.startedProject.update({
-        where: {
-          userId_projectTemplateId: {
-            userId: user.id,
-            projectTemplateId: projectId
-          }
-        },
-        data: {
-          completedSteps: updatedSteps
-        }
-      });
-
-      // Recalculate progress
-      const project = await prisma.projectTemplate.findUnique({
-        where: { id: projectId },
-        include: { steps: true }
-      });
-
-      const progress = project 
-        ? Math.round((updatedSteps.length / project.steps.length) * 100)
-        : 0;
-
-      // Update progress percentage
-      const finalUpdate = await prisma.startedProject.update({
-        where: {
-          userId_projectTemplateId: {
-            userId: user.id,
-            projectTemplateId: projectId
-          }
-        },
-        data: { progress }
-      });
-
-      return NextResponse.json({ 
-        success: true, 
-        progress: finalUpdate.progress,
-        completedSteps: finalUpdate.completedSteps 
-      });
+      // Award points and update streak
+      await awardPoints(session.user.id, pointsAwarded, 'Completed tutorial step')
+      await updateUserStreak(session.user.id)
+    } else if (action === 'incomplete') {
+      newCompleted = currentCompleted.filter(id => id !== stepId)
+    } else {
+      newCompleted = currentCompleted
     }
 
-    return NextResponse.json({ success: true });
+    const totalSteps = startedProject.projectTemplate.steps.length
+    const newProgress = Math.round((newCompleted.length / totalSteps) * 100)
+
+    // Check if project just completed
+    const wasComplete = startedProject.progress === 100
+    const isNowComplete = newProgress === 100
+    
+    if (isNowComplete && !wasComplete) {
+      // Bonus points for completing entire project
+      await awardPoints(session.user.id, 500, 'Completed full project!')
+    }
+
+    await prisma.startedProject.update({
+      where: {
+        userId_projectTemplateId: {
+          userId: session.user.id,
+          projectTemplateId: projectId
+        }
+      },
+      data: {
+        completedSteps: newCompleted,
+        progress: newProgress,
+        status: newProgress === 100 ? 'completed' : 'in-progress',
+        lastWorkedOn: new Date(),
+        completedAt: isNowComplete ? new Date() : null
+      }
+    })
+
+    return NextResponse.json({ 
+      success: true, 
+      progress: newProgress,
+      pointsAwarded
+    })
+
   } catch (error) {
-    console.error('POST Progress API error:', error);
+    console.error('Progress update error:', error)
     return NextResponse.json(
-      { error: 'Internal server error' }, 
+      { error: 'Failed to update progress' },
       { status: 500 }
-    );
+    )
   }
 }

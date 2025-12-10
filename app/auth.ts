@@ -1,13 +1,10 @@
-// app/auth.ts - UPDATED WITH PRISMA ADAPTER
 import NextAuth from "next-auth"
 import GitHub from "next-auth/providers/github"
 import { PrismaAdapter } from "@auth/prisma-adapter"
-import { PrismaClient } from "@prisma/client"
-
-const prisma = new PrismaClient()
+import { prisma } from "@/lib/prisma"
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  adapter: PrismaAdapter(prisma), // ← CRITICAL: Saves users to database
+  adapter: PrismaAdapter(prisma),
   providers: [
     GitHub({
       clientId: process.env.GITHUB_ID!,
@@ -16,15 +13,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ],
   pages: {
     signIn: "/auth/signin",
-  },
-  session: {
-    strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60,
+    error: "/auth/error",
   },
   callbacks: {
-    async session({ session, token }) {
-      if (session.user && token.sub) {
-        session.user.id = token.sub
+    async session({ session, user }) {
+      if (session.user) {
+        session.user.id = user.id
       }
       return session
     },
