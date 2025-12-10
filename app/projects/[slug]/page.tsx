@@ -5,6 +5,16 @@ interface PageProps {
   params: Promise<{ slug: string }>
 }
 
+const getCodeSnippets = (codeSnippets: any): Array<{ language: string; code: string }> => {
+  if (!codeSnippets) return []
+  if (Array.isArray(codeSnippets)) {
+    return codeSnippets.filter(item => 
+      item && typeof item.language === 'string' && typeof item.code === 'string'
+    )
+  }
+  return []
+}
+
 export default async function ProjectDetailPage({ params }: PageProps) {
   const slug = (await params).slug
   
@@ -35,28 +45,45 @@ export default async function ProjectDetailPage({ params }: PageProps) {
 
         <div className="max-w-7xl mx-auto p-8">
           <div className="space-y-6">
-            {project.steps.map((step) => (
-              <div key={step.id} className="bg-white rounded-lg shadow p-6">
-                <h2 className="text-xl font-bold mb-2">
-                  Step {step.order}: {step.title}
-                </h2>
-                <p className="text-gray-600 mb-4">{step.description}</p>
-                <p className="text-sm text-gray-500">
-                  Estimated Time: {step.estimatedTime || 'Not specified'}
-                </p>
-                
-                {step.pitfalls && step.pitfalls.length > 0 && (
-                  <div className="mt-4 bg-yellow-50 border border-yellow-200 rounded p-3">
-                    <p className="font-bold text-yellow-800 mb-2">⚠️ Common Pitfalls:</p>
-                    <ul className="list-disc list-inside text-sm text-yellow-700">
-                      {step.pitfalls.map((pitfall, idx) => (
-                        <li key={idx}>{pitfall}</li>
+            {project.steps.map((step) => {
+              const codeSnippets = getCodeSnippets(step.codeSnippets)
+              
+              return (
+                <div key={step.id} className="bg-white rounded-lg shadow p-6">
+                  <h2 className="text-xl font-bold mb-2">
+                    Step {step.order}: {step.title}
+                  </h2>
+                  <p className="text-gray-600 mb-4">{step.description}</p>
+                  <p className="text-sm text-gray-500 mb-4">
+                    Estimated Time: {step.estimatedTime || 'Not specified'}
+                  </p>
+                  
+                  {codeSnippets.length > 0 && (
+                    <div className="space-y-3 mb-4">
+                      {codeSnippets.map((snippet, idx) => (
+                        <div key={idx} className="bg-gray-900 rounded-lg p-4">
+                          <div className="text-xs text-gray-400 mb-2">{snippet.language}</div>
+                          <pre className="text-sm text-white overflow-x-auto">
+                            <code>{snippet.code}</code>
+                          </pre>
+                        </div>
                       ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-            ))}
+                    </div>
+                  )}
+                  
+                  {step.pitfalls && step.pitfalls.length > 0 && (
+                    <div className="bg-yellow-50 border border-yellow-200 rounded p-3">
+                      <p className="font-bold text-yellow-800 mb-2">⚠️ Common Pitfalls:</p>
+                      <ul className="list-disc list-inside text-sm text-yellow-700">
+                        {step.pitfalls.map((pitfall, idx) => (
+                          <li key={idx}>{pitfall}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
           </div>
         </div>
       </div>
