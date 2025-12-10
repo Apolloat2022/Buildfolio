@@ -1,4 +1,4 @@
-﻿import { auth } from '@/app/auth'
+import { auth } from '@/app/auth'
 import { prisma } from '@/lib/prisma'
 import { redirect } from 'next/navigation'
 import DashboardClient from './DashboardClient'
@@ -32,17 +32,17 @@ export default async function DashboardPage() {
 
   // 2. User's tutorial progress (StartedProject model)
   const startedProjects = await prisma.startedProject.findMany({
-    where: { userId: session.user.id },
-    include: {
-      project: {
-        include: {
-          steps: true
-        }
+  where: { userId: session.user.id },
+  include: {
+    projectTemplate: {
+      include: {
+        steps: true
       }
-    },
-    orderBy: { updatedAt: 'desc' }
-  })
-
+    }
+  },
+  orderBy: { lastActivityAt: 'desc' }  
+})
+ 
   // TRANSFORM DATA for personal projects
   const transformedProjects = userProjects.map(project => ({
     ...project,
@@ -64,7 +64,7 @@ export default async function DashboardPage() {
     tutorialsStarted: startedProjects.length,
     tutorialsCompleted: startedProjects.filter(p => p.progress === 100).length,
     totalStepsCompleted: startedProjects.reduce((acc, p) => acc + p.completedSteps.length, 0),
-    totalStepsAvailable: startedProjects.reduce((acc, p) => acc + p.project.steps.length, 0),
+    totalStepsAvailable: startedProjects.reduce((acc, p) => acc + p.projectTemplate.steps.length, 0),
     overallProgress: startedProjects.reduce((acc, p) => acc + p.progress, 0) / Math.max(startedProjects.length, 1)
   }
 
