@@ -1,3 +1,4 @@
+﻿// app/projects/[slug]/page.tsx - FIXED VERSION
 import { prisma } from '@/lib/prisma'
 import { notFound } from 'next/navigation'
 import { auth } from '@/app/auth'
@@ -9,45 +10,14 @@ interface PageProps {
   params: Promise<{ slug: string }>
 }
 
-// SAFER version that won't crash on bad data
 const getCodeSnippets = (codeSnippets: any): Array<{ language: string; code: string }> => {
   if (!codeSnippets) return []
-  
-  try {
-    // If it's already a valid array, return it
-    if (Array.isArray(codeSnippets)) {
-      return codeSnippets.filter(item => 
-        item && 
-        typeof item === 'object' &&
-        typeof item.language === 'string' && 
-        typeof item.code === 'string'
-      )
-    }
-    
-    // If it's a string, try to parse it
-    if (typeof codeSnippets === 'string') {
-      try {
-        const parsed = JSON.parse(codeSnippets)
-        if (Array.isArray(parsed)) {
-          return parsed.filter(item => 
-            item && 
-            typeof item === 'object' &&
-            typeof item.language === 'string' && 
-            typeof item.code === 'string'
-          )
-        }
-      } catch {
-        // If JSON is invalid, return empty array
-        console.warn('Invalid JSON in codeSnippets')
-        return []
-      }
-    }
-    
-    return []
-  } catch (error) {
-    console.error('Error parsing code snippets:', error)
-    return []
+  if (Array.isArray(codeSnippets)) {
+    return codeSnippets.filter(item => 
+      item && typeof item.language === 'string' && typeof item.code === 'string'
+    )
   }
+  return []
 }
 
 export default async function ProjectDetailPage({ params }: PageProps) {
@@ -55,7 +25,6 @@ export default async function ProjectDetailPage({ params }: PageProps) {
   const session = await auth()
   
   try {
-    // Get project with REAL database steps
     const project = await prisma.projectTemplate.findUnique({
       where: { slug },
       include: {
@@ -89,20 +58,18 @@ export default async function ProjectDetailPage({ params }: PageProps) {
       )
     }
 
-    // User's progress for this project
     const userStartedProject = project.startedProjects?.[0] || null
     const completedSteps = userStartedProject?.completedSteps || []
     const progress = userStartedProject?.progress || 0
     const steps = project.steps || []
-    
-    // Use actual database fields
     const timeEstimateDisplay = project.timeEstimate || '25-30 hours'
     const resumeStars = project.resumeImpact || 5
     const technologies = project.technologies || []
 
+    // REMOVED THE ORPHANED CLOSING BRACE HERE
+    
     return (
       <div className="min-h-screen bg-gray-50">
-        {/* Navigation Header */}
         <div className="bg-white border-b sticky top-0 z-10">
           <div className="max-w-7xl mx-auto px-4 py-4">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -132,7 +99,6 @@ export default async function ProjectDetailPage({ params }: PageProps) {
                 </div>
               </div>
               
-              {/* PROGRESS TRACKER COMPONENT */}
               {session && (
                 <ProgressTracker 
                   totalSteps={steps.length}
@@ -141,7 +107,6 @@ export default async function ProjectDetailPage({ params }: PageProps) {
                 />
               )}
               
-              {/* If user not signed in, show sign in prompt */}
               {!session && (
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 min-w-[200px]">
                   <div className="text-center mb-2">
@@ -162,10 +127,9 @@ export default async function ProjectDetailPage({ params }: PageProps) {
 
         <div className="max-w-7xl mx-auto px-4 py-8">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Left: Steps - WITH PROGRESS TRACKING */}
             <div className="lg:col-span-2 space-y-6">
               {steps.map((step) => {
-                const isStepCompleted = completedSteps.includes(step.id);
+                const isStepCompleted = completedSteps.includes(step.id)
                 
                 return (
                   <InteractiveStep
@@ -188,23 +152,20 @@ export default async function ProjectDetailPage({ params }: PageProps) {
                           projectId, 
                           action: isCompleted ? 'complete' : 'incomplete' 
                         }),
-                      });
+                      })
                       
                       if (!response.ok) {
-                        throw new Error('Failed to update progress');
+                        throw new Error('Failed to update progress')
                       }
                       
-                      // Refresh the page to update progress
-                      window.location.reload();
+                      window.location.reload()
                     }}
                   />
-                );
+                )
               })}
             </div>
 
-            {/* Right: Sidebar */}
             <div className="space-y-6">
-              {/* Download Starter Code */}
               <div className="bg-white rounded-xl shadow-lg p-6">
                 <h3 className="text-lg font-bold text-gray-900 mb-4">🚀 Quick Start</h3>
                 <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg mb-3">
@@ -215,7 +176,6 @@ export default async function ProjectDetailPage({ params }: PageProps) {
                 </button>
               </div>
 
-              {/* Technologies */}
               <div className="bg-white rounded-xl shadow-lg p-6">
                 <h3 className="text-lg font-bold text-gray-900 mb-4">🛠️ Technologies</h3>
                 <div className="flex flex-wrap gap-2">
@@ -233,22 +193,20 @@ export default async function ProjectDetailPage({ params }: PageProps) {
                 </div>
               </div>
 
-              {/* Live Code Editor Preview */}
               <div className="bg-white rounded-xl shadow-lg p-6">
                 <h3 className="text-lg font-bold text-gray-900 mb-4">💻 Try It Live</h3>
                 <div className="border rounded-lg p-4 bg-gray-900 text-white font-mono text-sm">
                   // Welcome to {project.title}!<br/>
                   // Try editing this code:<br/><br/>
-                  function Welcome() &#123;<br/>
-                  &nbsp;&nbsp;return &lt;h1&gt;Building {project.title}&lt;/h1&gt;;<br/>
-                  &#125;
+                  function Welcome() {'{'}
+                  &nbsp;&nbsp;return &lt;h1&gt;Building {project.title}&lt;/h1&gt;;
+                  {'}'}
                 </div>
                 <button className="w-full mt-4 border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium py-2 px-4 rounded-lg">
                   Open Full Editor
                 </button>
               </div>
 
-              {/* Learning Progress (Mobile only) */}
               <div className="bg-white rounded-xl shadow-lg p-6 lg:hidden">
                 <h3 className="text-lg font-bold text-gray-900 mb-4">📊 Learning Progress</h3>
                 {session ? (
