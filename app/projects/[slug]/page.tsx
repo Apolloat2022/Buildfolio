@@ -285,7 +285,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
                     >
                       Sign In
                     </a>
-                </div>
+                  </div>
                 )}
               </div>
             </div>
