@@ -50,8 +50,8 @@ export async function GET() {
 
     const resumeData = {
       user: {
-        name: session.user.name,
-        email: session.user.email,
+        name: session.user.name ?? null,
+        email: session.user.email ?? null,
       },
       completedProjects,
       stats: {
@@ -61,7 +61,6 @@ export async function GET() {
       },
     }
 
-    // Use createElement instead of JSX
     const pdfElement = createElement(ResumePDF, { data: resumeData })
     const stream = await renderToStream(pdfElement)
 
