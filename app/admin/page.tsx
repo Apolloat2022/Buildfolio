@@ -1,4 +1,4 @@
-﻿import { auth } from '@/app/auth'
+import { auth } from '@/app/auth'
 import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
@@ -42,6 +42,8 @@ export default async function AdminPage() {
     _count: true,
   })
 
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-7xl mx-auto">
@@ -55,7 +57,7 @@ export default async function AdminPage() {
               href="/admin/emails"
               className="flex flex-col items-center gap-2 p-6 bg-blue-50 border-2 border-blue-200 rounded-lg hover:bg-blue-100"
             >
-              <span className="text-4xl">📧</span>
+              <span className="text-4xl">??</span>
               <span className="font-bold">View All Emails</span>
             </Link>
 
@@ -63,7 +65,7 @@ export default async function AdminPage() {
               href="/api/admin/export"
               className="flex flex-col items-center gap-2 p-6 bg-green-50 border-2 border-green-200 rounded-lg hover:bg-green-100"
             >
-              <span className="text-4xl">📊</span>
+              <span className="text-4xl">??</span>
               <span className="font-bold">Export All Users</span>
             </a>
 
@@ -71,7 +73,7 @@ export default async function AdminPage() {
               href="/api/admin/export-emails?filter=free-users"
               className="flex flex-col items-center gap-2 p-6 bg-purple-50 border-2 border-purple-200 rounded-lg hover:bg-purple-100"
             >
-              <span className="text-4xl">🎯</span>
+              <span className="text-4xl">??</span>
               <span className="font-bold">Export Free Users</span>
             </a>
 
