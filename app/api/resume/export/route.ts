@@ -1,7 +1,7 @@
 ﻿import { NextResponse } from 'next/server'
 import { auth } from '@/app/auth'
 import { prisma } from '@/lib/prisma'
-import { renderToStream } from '@react-pdf/renderer'
+import { renderToBuffer } from '@react-pdf/renderer'
 import { createElement } from 'react'
 import ResumePDF from '@/components/ResumePDF'
 
@@ -62,9 +62,9 @@ export async function GET() {
     }
 
     const pdfElement = createElement(ResumePDF, { data: resumeData })
-    const stream = await renderToStream(pdfElement)
+    const pdfBuffer = await renderToBuffer(pdfElement as any)
 
-    return new NextResponse(stream as any, {
+    return new NextResponse(pdfBuffer, {
       headers: {
         'Content-Type': 'application/pdf',
         'Content-Disposition': `attachment; filename="resume-${session.user.name || 'portfolio'}.pdf"`,
