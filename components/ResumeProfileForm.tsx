@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useState } from 'react'
 import { Briefcase, GraduationCap, Award, Plus, Trash2, Save } from 'lucide-react'
@@ -81,7 +81,7 @@ export default function ResumeProfileForm({ initialData }: { initialData?: any }
           workExperience: workExp,
           education,
           certifications: certs,
-          languages: profile.languages.split(',').map((l) => l.trim()).filter(Boolean),
+          languages: profile.languages.split(',').map((l: string) => l.trim()).filter(Boolean),
         }),
       })
 
@@ -436,3 +436,4 @@ export default function ResumeProfileForm({ initialData }: { initialData?: any }
     </div>
   )
 }
+
