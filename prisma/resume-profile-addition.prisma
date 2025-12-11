@@ -1,0 +1,35 @@
+﻿
+model ResumeProfile {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Personal Info
+  phone             String?
+  location          String?
+  website           String?
+  linkedin          String?
+  github            String?
+  
+  // Professional
+  professionalSummary String?
+  
+  // Work Experience (JSON array)
+  workExperience    Json?    // [{company, position, startDate, endDate, description}]
+  
+  // Education (JSON array)
+  education         Json?    // [{school, degree, field, year, description}]
+  
+  // Skills (JSON array)
+  skills            Json?    // [{category, items: []}]
+  
+  // Certifications (JSON array)
+  certifications    Json?    // [{name, issuer, date, url}]
+  
+  // Languages
+  languages         String[]
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+

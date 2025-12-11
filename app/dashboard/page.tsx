@@ -43,6 +43,12 @@ export default async function DashboardPage() {
             >
               Browse All Projects
             </Link>
+                        <Link
+              href="/dashboard/resume-profile"
+              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+            >
+              Complete Resume Profile
+            </Link>
             <ExportResumeButton />
           </div>
 
@@ -98,6 +104,7 @@ export default async function DashboardPage() {
     </div>
   )
 }
+
 
 
 

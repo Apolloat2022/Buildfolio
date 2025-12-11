@@ -34,6 +34,7 @@ model User {
   startedProjects  StartedProject[]
   showcases        Showcase[]
   showcaseComments ShowcaseComment[]
+  resumeProfile    ResumeProfile?
   badges           UserBadge[]
   achievements     Achievement[]
   questions        Question[]
@@ -290,5 +291,27 @@ model ShowcaseComment {
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   
   @@index([showcaseId])
+  @@index([userId])
+}
+model ResumeProfile {
+  id                  String   @id @default(cuid())
+  userId              String   @unique
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  phone               String?
+  location            String?
+  website             String?
+  linkedin            String?
+  github              String?
+  professionalSummary String?  @db.Text
+  workExperience      Json?
+  education           Json?
+  certifications      Json?
+  skills              Json?
+  languages           String[]
+  
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  
   @@index([userId])
 }
