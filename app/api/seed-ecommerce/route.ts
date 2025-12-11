@@ -39,11 +39,17 @@ export async function GET() {
         title: 'Project Setup & Database Schema',
         description: 'Initialize your Next.js project and set up the database schema for products, users, and orders.',
         estimatedTime: '2-3 hours',
-        codeSnippets: [
-          { language: 'bash', code: 'npx create-next-app@latest ecommerce-store\ncd ecommerce-store\nnpm install @prisma/client stripe' },
-          { language: 'prisma', code: 'model Product {\n  id String @id @default(cuid())\n  name String\n  price Decimal\n}' }
+        videoUrl: 'https://www.youtube.com/embed/VSB2h7mVhPg',
+        hints: [
+          { level: 1, content: 'Make sure Node.js is installed (v18 or higher)', unlockMinutes: 5 },
+          { level: 2, content: 'Use npx to ensure latest create-next-app version', unlockMinutes: 10 },
+          { level: 3, content: 'Run "npx prisma generate" after creating schema', unlockMinutes: 15 }
         ],
-        pitfalls: ['Add DATABASE_URL to .env', 'Run prisma generate']
+        codeSnippets: [
+          { language: 'bash', code: 'npx create-next-app@latest ecommerce-store\ncd ecommerce-store\nnpm install @prisma/client stripe @stripe/stripe-js\nnpx prisma init' },
+          { language: 'prisma', code: 'model Product {\n  id          String   @id @default(cuid())\n  name        String\n  description String\n  price       Decimal  @db.Decimal(10, 2)\n  imageUrl    String\n  stock       Int\n  category    String\n  createdAt   DateTime @default(now())\n}' }
+        ],
+        pitfalls: ['Add DATABASE_URL to .env', 'Run prisma generate', 'Use Decimal for money']
       },
       {
         projectTemplateId: projectId,
@@ -51,10 +57,15 @@ export async function GET() {
         title: 'Product Catalog Page',
         description: 'Build a responsive product grid.',
         estimatedTime: '3-4 hours',
+        videoUrl: 'https://www.youtube.com/embed/Sklc_fQBmcs',
+        hints: [
+          { level: 1, content: 'Use async/await in server components', unlockMinutes: 5 },
+          { level: 2, content: 'Add loading.tsx for loading states', unlockMinutes: 10 }
+        ],
         codeSnippets: [
           { language: 'typescript', code: 'const products = await prisma.product.findMany()' }
         ],
-        pitfalls: ['Handle loading states']
+        pitfalls: ['Handle empty list', 'Add error boundaries']
       },
       {
         projectTemplateId: projectId,
@@ -62,10 +73,15 @@ export async function GET() {
         title: 'Shopping Cart',
         description: 'Add cart functionality.',
         estimatedTime: '4-5 hours',
+        videoUrl: 'https://www.youtube.com/embed/lATafp15HWA',
+        hints: [
+          { level: 1, content: 'Consider using Zustand for state', unlockMinutes: 5 },
+          { level: 2, content: 'Persist to localStorage', unlockMinutes: 10 }
+        ],
         codeSnippets: [
           { language: 'typescript', code: 'export const useCart = create((set) => ({ items: [] }))' }
         ],
-        pitfalls: ['Persist to localStorage']
+        pitfalls: ['Validate cart on checkout', 'Handle quantity limits']
       },
       {
         projectTemplateId: projectId,
@@ -73,10 +89,15 @@ export async function GET() {
         title: 'Stripe Integration',
         description: 'Set up payments.',
         estimatedTime: '5-6 hours',
+        videoUrl: 'https://www.youtube.com/embed/1r-F3FIONl8',
+        hints: [
+          { level: 1, content: 'Get test keys from Stripe', unlockMinutes: 5 },
+          { level: 2, content: 'Never expose secret keys', unlockMinutes: 10 }
+        ],
         codeSnippets: [
           { language: 'typescript', code: 'const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)' }
         ],
-        pitfalls: ['Never expose secret keys']
+        pitfalls: ['Use test cards', 'Handle webhooks']
       },
       {
         projectTemplateId: projectId,
@@ -84,10 +105,11 @@ export async function GET() {
         title: 'Admin Dashboard',
         description: 'Manage orders.',
         estimatedTime: '6-7 hours',
+        videoUrl: 'https://www.youtube.com/embed/mbsmsi7l3r4',
         codeSnippets: [
           { language: 'typescript', code: 'const orders = await prisma.order.findMany()' }
         ],
-        pitfalls: ['Add auth middleware']
+        pitfalls: ['Add auth middleware', 'Role-based access']
       },
       {
         projectTemplateId: projectId,
@@ -95,10 +117,11 @@ export async function GET() {
         title: 'Search & Filter',
         description: 'Add search.',
         estimatedTime: '3-4 hours',
+        videoUrl: 'https://www.youtube.com/embed/mZvKPtH9Fzo',
         codeSnippets: [
           { language: 'typescript', code: 'where: { name: { contains: query } }' }
         ],
-        pitfalls: ['Use URL params']
+        pitfalls: ['Use URL params', 'Add debouncing']
       },
       {
         projectTemplateId: projectId,
@@ -106,10 +129,11 @@ export async function GET() {
         title: 'Deploy to Vercel',
         description: 'Production deployment.',
         estimatedTime: '2-3 hours',
+        videoUrl: 'https://www.youtube.com/embed/2HBIzEx6IZA',
         codeSnippets: [
           { language: 'bash', code: 'vercel --prod' }
         ],
-        pitfalls: ['Set environment variables']
+        pitfalls: ['Set environment variables', 'Configure CORS']
       }
     ]
 
@@ -121,7 +145,7 @@ export async function GET() {
 
     return NextResponse.json({
       success: true,
-      message: '✅ Seeded successfully!',
+      message: '✅ Seeded with working video URLs!',
       projectId,
       stepsCreated: createdSteps.length
     })

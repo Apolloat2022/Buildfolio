@@ -17,6 +17,16 @@ const getCodeSnippets = (codeSnippets: any): Array<{ language: string; code: str
   return []
 }
 
+const getHints = (hints: any): Array<{ level: number; content: string; unlockMinutes: number }> => {
+  if (!hints) return []
+  if (Array.isArray(hints)) {
+    return hints.filter(item => 
+      item && typeof item.level === 'number' && typeof item.content === 'string'
+    )
+  }
+  return []
+}
+
 export default async function ProjectDetailPage({ params }: PageProps) {
   const slug = (await params).slug
   const session = await auth()
@@ -78,11 +88,12 @@ export default async function ProjectDetailPage({ params }: PageProps) {
               {steps.map((step) => {
                 const isCompleted = completedSteps.includes(step.id)
                 const codeSnippets = getCodeSnippets(step.codeSnippets)
+                const hints = getHints(step.hints)
                 
                 return (
                   <div key={step.id} className={`bg-white rounded-lg shadow p-6 border-2 ${isCompleted ? 'border-green-500' : 'border-transparent'}`}>
-                    <div className="flex items-start justify-between">
-                      <h2 className="text-xl font-bold mb-2">
+                    <div className="flex items-start justify-between mb-4">
+                      <h2 className="text-xl font-bold">
                         Step {step.order}: {step.title}
                       </h2>
                       {isCompleted && (
@@ -96,9 +107,29 @@ export default async function ProjectDetailPage({ params }: PageProps) {
                     <p className="text-sm text-gray-500 mb-4">
                       ⏱️ {step.estimatedTime || 'Not specified'}
                     </p>
+
+                    {/* VIDEO WALKTHROUGH */}
+                    {step.videoUrl && (
+                      <div className="mb-6">
+                        <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                          🎥 Video Walkthrough
+                        </h4>
+                        <div className="aspect-video rounded-lg overflow-hidden border-2 border-gray-200 shadow-md">
+                          <iframe
+                            src={step.videoUrl}
+                            className="w-full h-full"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                            title={`Video for ${step.title}`}
+                          />
+                        </div>
+                      </div>
+                    )}
                     
+                    {/* CODE SNIPPETS */}
                     {codeSnippets.length > 0 && (
                       <div className="space-y-3 mb-4">
+                        <h4 className="font-semibold text-gray-900">📝 Code</h4>
                         {codeSnippets.map((snippet, idx) => (
                           <div key={idx} className="bg-gray-900 rounded-lg p-4">
                             <div className="text-xs text-gray-400 mb-2">{snippet.language}</div>
@@ -109,7 +140,27 @@ export default async function ProjectDetailPage({ params }: PageProps) {
                         ))}
                       </div>
                     )}
+
+                    {/* HINTS */}
+                    {hints.length > 0 && (
+                      <details className="mb-4 bg-amber-50 border-2 border-amber-200 rounded-lg p-4">
+                        <summary className="cursor-pointer font-semibold text-amber-900 flex items-center gap-2">
+                          💡 Hints ({hints.length} available)
+                        </summary>
+                        <div className="mt-3 space-y-2">
+                          {hints.map((hint, idx) => (
+                            <div key={idx} className="bg-white rounded p-3 border border-amber-200">
+                              <div className="text-xs text-amber-600 font-semibold mb-1">
+                                Hint {hint.level} (unlocks after {hint.unlockMinutes}min)
+                              </div>
+                              <p className="text-sm text-gray-700">{hint.content}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </details>
+                    )}
                     
+                    {/* PITFALLS */}
                     {step.pitfalls && step.pitfalls.length > 0 && (
                       <div className="bg-yellow-50 border border-yellow-200 rounded p-3 mb-4">
                         <p className="font-bold text-yellow-800 mb-2">⚠️ Common Pitfalls:</p>
@@ -121,6 +172,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
                       </div>
                     )}
                     
+                    {/* MARK COMPLETE BUTTON */}
                     {session && (
                       <MarkCompleteButton 
                         stepId={step.id}
@@ -133,6 +185,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
               })}
             </div>
 
+            {/* SIDEBAR */}
             <div className="space-y-6">
               <div className="bg-white rounded-xl shadow-lg p-6">
                 <h3 className="text-lg font-bold mb-4">🛠️ Technologies</h3>
