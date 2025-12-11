@@ -13,6 +13,7 @@ export default function MarkCompleteButton({ stepId, projectId, isCompleted }: M
   const [loading, setLoading] = useState(false)
 
   const handleClick = async () => {
+    console.log('Button clicked!', { stepId, projectId, action: isCompleted ? 'incomplete' : 'complete' })
     setLoading(true)
     const action = isCompleted ? 'incomplete' : 'complete'
     
@@ -25,21 +26,26 @@ export default function MarkCompleteButton({ stepId, projectId, isCompleted }: M
       
       if (response.ok) {
         const data = await response.json()
+        console.log('API Response:', data)
         
         // Show points toast
         if (data.pointsAwarded && data.pointsAwarded > 0) {
+          console.log('Showing points toast:', data.pointsAwarded)
           showPointsToast(data.pointsAwarded, 'Great work!')
         }
         
-        // Show streak toast if user maintains streak
+        // Show streak toast
         if (data.newStreak && data.newStreak >= 3) {
+          console.log('Showing streak toast:', data.newStreak)
           showStreakToast(data.newStreak)
         }
         
-        // Wait for toast animation then reload
+        // Wait for toast then reload
         setTimeout(() => {
           window.location.reload()
         }, 1200)
+      } else {
+        console.error('API error:', response.status)
       }
     } catch (error) {
       console.error('Failed to update progress:', error)
