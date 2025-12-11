@@ -9,33 +9,58 @@ const styles = StyleSheet.create({
   },
   header: {
     marginBottom: 20,
-    borderBottom: 2,
-    borderBottomColor: '#2563eb',
     paddingBottom: 10,
+    borderBottomWidth: 2,
+    borderBottomColor: '#2563eb',
+    borderBottomStyle: 'solid',
   },
   name: {
     fontSize: 24,
-    fontWeight: 'bold',
     marginBottom: 5,
   },
   contact: {
     fontSize: 10,
-    color: '#64748b',
-    marginBottom: 2,
+    color: '#666',
+    marginBottom: 3,
   },
   section: {
     marginTop: 20,
+    marginBottom: 10,
   },
   sectionTitle: {
     fontSize: 14,
     fontWeight: 'bold',
     marginBottom: 10,
-    borderBottom: 1,
-    borderBottomColor: '#e2e8f0',
     paddingBottom: 5,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+    borderBottomStyle: 'solid',
+  },
+  statsBox: {
+    marginTop: 15,
+    marginBottom: 15,
+    padding: 15,
+    backgroundColor: '#f8f9fa',
+  },
+  statsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  statsLabel: {
+    fontSize: 10,
+    color: '#666',
+  },
+  statsValue: {
+    fontSize: 10,
+    fontWeight: 'bold',
   },
   project: {
-    marginBottom: 15,
+    marginBottom: 20,
+    paddingBottom: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+    borderBottomStyle: 'solid',
   },
   projectTitle: {
     fontSize: 12,
@@ -45,29 +70,25 @@ const styles = StyleSheet.create({
   },
   projectMeta: {
     fontSize: 9,
-    color: '#64748b',
-    marginBottom: 5,
+    color: '#666',
+    marginBottom: 8,
   },
   description: {
     fontSize: 10,
-    marginBottom: 8,
+    lineHeight: 1.5,
+    marginBottom: 10,
   },
-  techBadge: {
-    backgroundColor: '#eff6ff',
-    padding: 4,
-    marginRight: 5,
-    marginBottom: 5,
-    fontSize: 8,
+  techContainer: {
+    marginTop: 8,
   },
-  stats: {
-    marginTop: 20,
-    padding: 15,
-    backgroundColor: '#f8fafc',
+  techLabel: {
+    fontSize: 9,
+    fontWeight: 'bold',
+    marginBottom: 4,
   },
-  statsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 5,
+  techList: {
+    fontSize: 9,
+    color: '#444',
   },
 })
 
@@ -95,42 +116,70 @@ interface ResumeData {
 export const ResumePDF = ({ data }: { data: ResumeData }) => (
   <Document>
     <Page size="A4" style={styles.page}>
+      {/* Header */}
       <View style={styles.header}>
         <Text style={styles.name}>{data.user.name || 'Developer Portfolio'}</Text>
         <Text style={styles.contact}>{data.user.email}</Text>
+        <Text style={styles.contact}>Portfolio: buildfolio-khaki.vercel.app</Text>
       </View>
 
-      <View style={styles.stats}>
+      {/* Stats Summary */}
+      <View style={styles.statsBox}>
         <View style={styles.statsRow}>
-          <Text>Completed Projects:</Text>
-          <Text>{data.stats.totalProjects}</Text>
+          <Text style={styles.statsLabel}>Completed Projects:</Text>
+          <Text style={styles.statsValue}>{data.stats.totalProjects}</Text>
         </View>
         <View style={styles.statsRow}>
-          <Text>Development Time:</Text>
-          <Text>{data.stats.totalHours} hours</Text>
+          <Text style={styles.statsLabel}>Total Development Time:</Text>
+          <Text style={styles.statsValue}>{data.stats.totalHours} hours</Text>
+        </View>
+        <View style={styles.statsRow}>
+          <Text style={styles.statsLabel}>Technologies Mastered:</Text>
+          <Text style={styles.statsValue}>{data.stats.technologiesLearned.length}</Text>
         </View>
       </View>
 
+      {/* Projects Section */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Portfolio Projects</Text>
+        
         {data.completedProjects.map((project, index) => (
           <View key={project.id} style={styles.project}>
             <Text style={styles.projectTitle}>
               {index + 1}. {project.title}
             </Text>
+            
             <Text style={styles.projectMeta}>
-              {project.difficulty} • {project.timeEstimate || 'Self-paced'}
+              Difficulty: {project.difficulty} | Timeline: {project.timeEstimate || 'Self-paced'}
             </Text>
+            
             <Text style={styles.description}>
-              {project.description || 'Full-stack application'}
+              {project.description || 'Full-stack application demonstrating modern development practices'}
             </Text>
+            
+            <View style={styles.techContainer}>
+              <Text style={styles.techLabel}>Technologies Used:</Text>
+              <Text style={styles.techList}>
+                {project.technologies.join(', ')}
+              </Text>
+            </View>
           </View>
         ))}
       </View>
 
+      {/* Technical Skills */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Technical Skills</Text>
-        <Text>{data.stats.technologiesLearned.join(', ')}</Text>
+        <Text style={styles.techList}>
+          {data.stats.technologiesLearned.join(' • ')}
+        </Text>
+      </View>
+
+      {/* Footer */}
+      <View style={{ position: 'absolute', bottom: 30, left: 40, right: 40 }}>
+        <Text style={{ fontSize: 8, color: '#999', textAlign: 'center' }}>
+          Generated from Buildfolio • {new Date().toLocaleDateString()}
+        </Text>
       </View>
     </Page>
   </Document>
