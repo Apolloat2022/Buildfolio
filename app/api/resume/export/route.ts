@@ -12,6 +12,12 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    // Fetch resume profile
+    const resumeProfile = await prisma.resumeProfile.findUnique({
+      where: { userId: session.user.id },
+    })
+
+    // Fetch completed projects
     const startedProjects = await prisma.startedProject.findMany({
       where: {
         userId: session.user.id,
@@ -53,6 +59,19 @@ export async function GET() {
         name: session.user.name ?? null,
         email: session.user.email ?? null,
       },
+      profile: resumeProfile ? {
+        phone: resumeProfile.phone,
+        location: resumeProfile.location,
+        website: resumeProfile.website,
+        linkedin: resumeProfile.linkedin,
+        github: resumeProfile.github,
+        professionalSummary: resumeProfile.professionalSummary,
+        workExperience: resumeProfile.workExperience as any[] || [],
+        education: resumeProfile.education as any[] || [],
+        certifications: resumeProfile.certifications as any[] || [],
+        skills: resumeProfile.skills,
+        languages: resumeProfile.languages || [],
+      } : null,
       completedProjects,
       stats: {
         totalProjects: completedProjects.length,
