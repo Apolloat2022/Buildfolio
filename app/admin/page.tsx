@@ -49,6 +49,8 @@ export default async function AdminPage() {
         {/* Export Buttons */}
         <div className="flex gap-4 mb-8">
           
+            <a
+          
             href="/api/admin/export"
             className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
           >
@@ -66,7 +68,7 @@ export default async function AdminPage() {
               <a href="/api/admin/export-emails?filter=free-users" className="block px-4 py-2 hover:bg-gray-100 rounded">
                 Free Users Only
               </a>
-              <a href="/api/admin/export-emails?filter=active-free" className="block px-4 py-2 hover:bg-gray-100 rounded">
+              <a <a href="/api/admin/export-emails?filter=active-free" className="block px-4 py-2 hover:bg-gray-100 rounded">
                 Active Free Users (30 days)
               </a>
               <a href="/api/admin/export-emails?filter=completed-projects" className="block px-4 py-2 hover:bg-gray-100 rounded">
@@ -77,6 +79,9 @@ export default async function AdminPage() {
               </a>
             </div>
           </div>
+          
+          
+            <a
           
           
             href="/api/admin/export-emails?filter=active-free"
@@ -159,4 +164,5 @@ export default async function AdminPage() {
     </div>
   )
 }
+
 
