@@ -1,4 +1,4 @@
-﻿import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/app/auth'
 import { prisma } from '@/lib/prisma'
 
@@ -278,7 +278,7 @@ export async function GET(req: NextRequest) {
           
           <div class="content">
             <div class="header">
-              <img src="/images/apollo-logo.png" alt="Apollo Technologies" class="apollo-logo" />
+              <img src="/images/logo.png" alt="Apollo Technologies" class="apollo-logo" />
               <div class="buildfolio-text">
                 <div class="logo">BUILDFOLIO</div>
                 <div class="logo-sub">Professional Development</div>
@@ -340,3 +340,4 @@ export async function GET(req: NextRequest) {
     return new NextResponse('Error generating certificate', { status: 500 })
   }
 }
+
