@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 import { useState } from 'react'
 import { ExternalLink, Github, Award, Clock, Target } from 'lucide-react'
 import Link from 'next/link'
@@ -91,7 +91,7 @@ export default function AdminReviewCard({ submission }: AdminReviewCardProps) {
     } finally {
       setLoading(false)
     }
-  }
+  }}
 
   const estimatedHours = Math.round(submission.timeSpentMinutes / 60)
 
@@ -206,3 +206,4 @@ export default function AdminReviewCard({ submission }: AdminReviewCardProps) {
     </div>
   )
 }
+
