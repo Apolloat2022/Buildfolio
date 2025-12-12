@@ -1,7 +1,7 @@
-﻿import { prisma } from '@/lib/prisma'
+import { prisma } from '@/lib/prisma'
 import { NextResponse } from 'next/server'
 
-export async function POST() {
+export async function GET() {
   try {
     const project = await prisma.projectTemplate.findUnique({
       where: { slug: 'ecommerce-store' }
@@ -25,11 +25,11 @@ export async function POST() {
         estimatedMinutes: 150,
         videoUrl: 'https://www.youtube.com/embed/VSB2h7mVhPg',
         hints: [
-          { level: 1, content: '✅ Quick Check: Verify Node.js version with "node -v". Need v18 or higher for Next.js 14.', unlockMinutes: 3 },
-          { level: 2, content: '💡 Pro Tip: Use "npx" instead of global installs to always get the latest create-next-app version.', unlockMinutes: 7 },
-          { level: 3, content: '🗄️ Database Setup: Get free PostgreSQL from Neon.tech. Copy connection string to .env as DATABASE_URL.', unlockMinutes: 12 },
-          { level: 4, content: '⚡ Must Run: After updating schema.prisma, always run "npx prisma generate" to update your Prisma Client.', unlockMinutes: 18 },
-          { level: 5, content: '🎯 Success Check: Run "npx prisma studio" to open visual database browser at localhost:5555', unlockMinutes: 25 }
+          { level: 1, content: '? Quick Check: Verify Node.js version with "node -v". Need v18 or higher for Next.js 14.', unlockMinutes: 3 },
+          { level: 2, content: '?? Pro Tip: Use "npx" instead of global installs to always get the latest create-next-app version.', unlockMinutes: 7 },
+          { level: 3, content: '??? Database Setup: Get free PostgreSQL from Neon.tech. Copy connection string to .env as DATABASE_URL.', unlockMinutes: 12 },
+          { level: 4, content: '? Must Run: After updating schema.prisma, always run "npx prisma generate" to update your Prisma Client.', unlockMinutes: 18 },
+          { level: 5, content: '?? Success Check: Run "npx prisma studio" to open visual database browser at localhost:5555', unlockMinutes: 25 }
         ],
         codeSnippets: [
           { language: 'bash', label: '1. Create Project', code: 'npx create-next-app@latest ecommerce-store --typescript --tailwind --app\ncd ecommerce-store\nnpm run dev' },
@@ -40,11 +40,11 @@ export async function POST() {
           { language: 'bash', label: '6. Push to Database', code: 'npx prisma db push\nnpx prisma generate\nnpx prisma studio' }
         ],
         pitfalls: [
-          '❌ Missing DATABASE_URL → ✅ Add to .env from Neon.tech',
-          '❌ Forgot prisma generate → ✅ Always run after schema changes',
-          '❌ Using Number for money → ✅ Use Decimal type for prices',
-          '❌ Node.js too old → ✅ Update to v18+',
-          '❌ SSL connection error → ✅ Add ?sslmode=require to URL'
+          '? Missing DATABASE_URL ? ? Add to .env from Neon.tech',
+          '? Forgot prisma generate ? ? Always run after schema changes',
+          '? Using Number for money ? ? Use Decimal type for prices',
+          '? Node.js too old ? ? Update to v18+',
+          '? SSL connection error ? ? Add ?sslmode=require to URL'
         ]
       },
       // Add steps 2-7 here (abbreviated for message length)
@@ -58,7 +58,7 @@ export async function POST() {
 
     return NextResponse.json({
       success: true,
-      message: '✅ Enhanced E-commerce tutorial!',
+      message: '? Enhanced E-commerce tutorial!',
       stepsCreated: created.length
     })
   } catch (error) {
@@ -67,3 +67,4 @@ export async function POST() {
     }, { status: 500 })
   }
 }
+
