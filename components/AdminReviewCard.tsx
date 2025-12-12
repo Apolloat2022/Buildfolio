@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 import { useState } from 'react'
 import { ExternalLink, Github, Award, Clock, Target } from 'lucide-react'
 import Link from 'next/link'
@@ -58,7 +58,7 @@ export default function AdminReviewCard({ submission }: AdminReviewCardProps) {
       })
 
       if (response.ok) {
-        alert('Certificate approved! 🎉')
+        alert('Certificate approved! ??')
         window.location.reload()
       } else {
         alert('Failed to approve certificate')
@@ -215,10 +215,11 @@ export default function AdminReviewCard({ submission }: AdminReviewCardProps) {
             disabled={loading}
             className="flex-1 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 font-semibold"
           >
-            ✓ Approve Certificate
+            ? Approve Certificate
           </button>
         </div>
       </div>
     </div>
   )
 }
+
