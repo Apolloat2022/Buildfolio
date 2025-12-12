@@ -1,8 +1,7 @@
 ﻿"use client"
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import GitHubSubmission from './GitHubSubmission'
 import ShowcasePrompt from './ShowcasePrompt'
-import DownloadCertificateButton from './DownloadCertificateButton'
 
 interface ProjectCompletionFlowProps {
   projectId: string
@@ -33,7 +32,7 @@ export default function ProjectCompletionFlow({
     return null
   }
 
-  // Show certificate if eligible
+  // Show certificate if eligible (simplified for now)
   if (certificateEligible) {
     return (
       <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border-2 border-green-500 p-8 mb-6 text-center">
@@ -42,10 +41,12 @@ export default function ProjectCompletionFlow({
         <p className="text-gray-600 mb-6">
           You've completed this project and earned your certificate!
         </p>
-        <DownloadCertificateButton 
-          projectSlug={projectSlug}
-          isCompleted={true}
-        />
+        
+          href={`/api/certificate?project=${projectSlug}`}
+          className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 shadow-lg"
+        >
+          🏆 Download Certificate
+        </a>
       </div>
     )
   }
@@ -57,10 +58,10 @@ export default function ProjectCompletionFlow({
         <div className="text-5xl mb-4">⏳</div>
         <h3 className="text-xl font-bold mb-2">Pending Admin Approval</h3>
         <p className="text-gray-600 mb-4">
-          Your project has been submitted for review. You'll be notified once your certificate is approved!
+          Your project has been submitted for review. Certificate coming soon!
         </p>
         <div className="text-sm text-gray-500">
-          This usually takes 24-48 hours.
+          Usually takes 24-48 hours.
         </div>
       </div>
     )
