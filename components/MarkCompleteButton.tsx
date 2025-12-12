@@ -8,6 +8,8 @@ interface MarkCompleteButtonProps {
   projectId: string
   isCompleted: boolean
   requiresQuiz?: boolean
+  estimatedMinutes?: number
+  timeSpentMinutes?: number
 }
 
 interface QuizQuestion {
@@ -22,12 +24,15 @@ export default function MarkCompleteButton({
   stepId, 
   projectId, 
   isCompleted,
-  requiresQuiz = true 
+  requiresQuiz = true,
+  estimatedMinutes = 0,
+  timeSpentMinutes = 0
 }: MarkCompleteButtonProps) {
   const [loading, setLoading] = useState(false)
   const [showQuiz, setShowQuiz] = useState(false)
   const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([])
   const [loadingQuiz, setLoadingQuiz] = useState(false)
+  const [showTimeWarning, setShowTimeWarning] = useState(false)
 
   const handleClick = async () => {
     // If marking as incomplete, just do it directly
@@ -36,11 +41,29 @@ export default function MarkCompleteButton({
       return
     }
 
+    // Check time spent (need at least 60% of estimated time)
+    if (estimatedMinutes > 0) {
+      const minimumTime = estimatedMinutes * 0.6
+      if (timeSpentMinutes < minimumTime) {
+        setShowTimeWarning(true)
+        return
+      }
+    }
+
     // If marking as complete and quiz required, show quiz first
     if (requiresQuiz) {
       await loadQuiz()
     } else {
-      // No quiz required, mark complete directly
+      markComplete(true)
+    }
+  }
+
+  const handleTimeWarningConfirm = async () => {
+    setShowTimeWarning(false)
+    // Proceed with quiz anyway
+    if (requiresQuiz) {
+      await loadQuiz()
+    } else {
       markComplete(true)
     }
   }
@@ -55,13 +78,11 @@ export default function MarkCompleteButton({
         setQuizQuestions(data.questions)
         setShowQuiz(true)
       } else {
-        // No quiz questions, mark complete directly
         console.log('No quiz questions found, marking complete')
         markComplete(true)
       }
     } catch (error) {
       console.error('Failed to load quiz:', error)
-      // On error, allow completion without quiz
       markComplete(true)
     } finally {
       setLoadingQuiz(false)
@@ -84,19 +105,14 @@ export default function MarkCompleteButton({
         const data = await response.json()
         console.log('API Response:', data)
 
-        // Show points toast
         if (data.pointsAwarded && data.pointsAwarded > 0) {
-          console.log('Showing points toast:', data.pointsAwarded)
           showPointsToast(data.pointsAwarded, 'Great work!')
         }
 
-        // Show streak toast
         if (data.newStreak && data.newStreak >= 3) {
-          console.log('Showing streak toast:', data.newStreak)
           showStreakToast(data.newStreak)
         }
 
-        // Wait for toast then reload
         setTimeout(() => {
           window.location.reload()
         }, 1200)
@@ -137,6 +153,40 @@ export default function MarkCompleteButton({
           'Mark Complete'
         )}
       </button>
+
+      {/* Time Warning Modal */}
+      {showTimeWarning && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl max-w-md w-full p-6">
+            <div className="text-center">
+              <div className="text-5xl mb-4">⏱️</div>
+              <h3 className="text-xl font-bold mb-2">Not Enough Time Spent</h3>
+              <p className="text-gray-600 mb-4">
+                This step is estimated to take <strong>{estimatedMinutes} minutes</strong>.
+                You've only spent <strong>{Math.round(timeSpentMinutes)} minutes</strong>.
+              </p>
+              <p className="text-gray-600 mb-6">
+                We recommend spending at least <strong>{Math.round(estimatedMinutes * 0.6)} minutes</strong> to 
+                fully understand the material.
+              </p>
+              <div className="flex gap-3 justify-center">
+                <button
+                  onClick={() => setShowTimeWarning(false)}
+                  className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                >
+                  Keep Learning
+                </button>
+                <button
+                  onClick={handleTimeWarningConfirm}
+                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                >
+                  Continue Anyway
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showQuiz && (
         <QuizModal
