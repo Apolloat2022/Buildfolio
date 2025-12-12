@@ -1,26 +1,28 @@
-// app/projects/page.tsx
+﻿// app/projects/page.tsx
 import { prisma } from '@/lib/prisma'
-import ProjectCard from '@/components/ProjectCard'
+import ProjectsGrid from '@/components/ProjectsGrid'
 
 export default async function ProjectsPage() {
   const projects = await prisma.projectTemplate.findMany({
-    orderBy: { resumeImpact: 'desc' }, // ← ADDED MISSING COMMA HERE
+    orderBy: { resumeImpact: 'desc' },
     include: {
       steps: true,
-    } // ← ADDED MISSING CLOSING BRACE
+    }
   })
 
-  // Transform null values to ensure compatibility with ProjectCard
   const transformedProjects = projects.map(project => ({
     ...project,
     description: project.description || '',
     timeEstimate: project.timeEstimate || '',
     resumeImpact: project.resumeImpact || 0,
     category: project.category || '',
-    // Ensure technologies and steps are always arrays
     technologies: project.technologies || [],
     steps: project.steps || [],
   }))
+
+  // Get unique difficulties and technologies for filters
+  const difficulties = [...new Set(projects.map(p => p.difficulty))]
+  const allTechnologies = [...new Set(projects.flatMap(p => p.technologies || []))]
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -31,18 +33,12 @@ export default async function ProjectsPage() {
             Browse {transformedProjects.length} resume-worthy projects to build your portfolio
           </p>
         </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {transformedProjects.map((project) => (
-            <ProjectCard key={project.id} project={project} />
-          ))}
-        </div>
-
-        <div className="mt-12 text-center">
-          <p className="text-gray-500">
-            More projects coming soon! Check back regularly for new challenges.
-          </p>
-        </div>
+        
+        <ProjectsGrid 
+          projects={transformedProjects}
+          difficulties={difficulties}
+          technologies={allTechnologies}
+        />
       </div>
     </div>
   )
