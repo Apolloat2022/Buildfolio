@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 import { useState } from 'react'
 import { ExternalLink, Github, Award, Clock, Target } from 'lucide-react'
 import Link from 'next/link'
@@ -41,10 +41,8 @@ export default function AdminReviewCard({ submission }: AdminReviewCardProps) {
   const [loading, setLoading] = useState(false)
 
   const handleApprove = async () => {
-    if (!confirm('Approve this certificate? The user will be able to download it.')) {
-      return
-    }
-
+    if (!confirm('Approve this certificate?')) return
+    
     setLoading(true)
     try {
       const response = await fetch('/api/admin/approve-certificate', {
@@ -58,20 +56,18 @@ export default function AdminReviewCard({ submission }: AdminReviewCardProps) {
       })
 
       if (response.ok) {
-        alert('Certificate approved! ??')
+        alert('Certificate approved!')
         window.location.reload()
-      } else {
-        alert('Failed to approve certificate')
       }
     } catch (error) {
-      alert('Error approving certificate')
+      alert('Error approving')
     } finally {
       setLoading(false)
     }
   }
 
   const handleReject = async () => {
-    const reason = prompt('Please provide a reason for rejection:')
+    const reason = prompt('Reason for rejection:')
     if (!reason) return
 
     setLoading(true)
@@ -87,24 +83,20 @@ export default function AdminReviewCard({ submission }: AdminReviewCardProps) {
       })
 
       if (response.ok) {
-        alert('Submission rejected. User has been notified.')
+        alert('Submission rejected')
         window.location.reload()
-      } else {
-        alert('Failed to reject submission')
       }
     } catch (error) {
-      alert('Error rejecting submission')
+      alert('Error rejecting')
     } finally {
       setLoading(false)
     }
   }
 
-
   const estimatedHours = Math.round(submission.timeSpentMinutes / 60)
 
   return (
     <div className="bg-white rounded-lg border shadow-sm overflow-hidden">
-      {/* Header */}
       <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-6 border-b">
         <div className="flex items-start justify-between">
           <div>
@@ -120,9 +112,7 @@ export default function AdminReviewCard({ submission }: AdminReviewCardProps) {
         </div>
       </div>
 
-      {/* Content */}
       <div className="p-6 space-y-6">
-        {/* Quiz Scores */}
         <div>
           <h4 className="font-semibold mb-3 flex items-center gap-2">
             <Target className="w-4 h-4" />
@@ -132,24 +122,20 @@ export default function AdminReviewCard({ submission }: AdminReviewCardProps) {
             {submission.quizScores.map((score) => (
               <div key={score.stepOrder} className="bg-gray-50 rounded p-3">
                 <div className="text-xs text-gray-500 mb-1">Step {score.stepOrder}</div>
-                <div className={`text-lg font-bold ${
-                  score.score >= 80 ? 'text-green-600' : 'text-red-600'
-                }`}>
+                <div className={`text-lg font-bold ${score.score >= 80 ? 'text-green-600' : 'text-red-600'}`}>
                   {score.score}%
                 </div>
-                <div className="text-xs text-gray-500">{score.attempts} attempt{score.attempts !== 1 ? 's' : ''}</div>
+                <div className="text-xs text-gray-500">{score.attempts} attempts</div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Time Spent */}
         <div className="flex items-center gap-2 text-gray-600">
           <Clock className="w-4 h-4" />
           <span>Time Spent: <strong>{estimatedHours} hours</strong></span>
         </div>
 
-        {/* Technologies */}
         <div>
           <h4 className="font-semibold mb-2">Technologies</h4>
           <div className="flex flex-wrap gap-2">
@@ -161,7 +147,6 @@ export default function AdminReviewCard({ submission }: AdminReviewCardProps) {
           </div>
         </div>
 
-        {/* Links */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {submission.githubRepoUrl && (
             
@@ -171,7 +156,7 @@ export default function AdminReviewCard({ submission }: AdminReviewCardProps) {
               className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800"
             >
               <Github className="w-4 h-4" />
-              View GitHub Repo
+              View GitHub
               <ExternalLink className="w-3 h-3 ml-auto" />
             </a>
           )}
@@ -188,21 +173,19 @@ export default function AdminReviewCard({ submission }: AdminReviewCardProps) {
           )}
         </div>
 
-        {/* Admin Notes */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Admin Notes (optional)
+            Admin Notes
           </label>
           <textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder="Add any notes or feedback..."
+            placeholder="Optional feedback..."
             rows={3}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
-        {/* Actions */}
         <div className="flex gap-3 pt-4 border-t">
           <button
             onClick={handleReject}
@@ -216,13 +199,10 @@ export default function AdminReviewCard({ submission }: AdminReviewCardProps) {
             disabled={loading}
             className="flex-1 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 font-semibold"
           >
-            ? Approve Certificate
+            Approve Certificate
           </button>
         </div>
       </div>
     </div>
   )
 }
-
-
-
