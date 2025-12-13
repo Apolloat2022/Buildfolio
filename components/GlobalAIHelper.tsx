@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 import { useState } from 'react'
 import { usePathname } from 'next/navigation'
 
@@ -15,18 +15,13 @@ export default function GlobalAIHelper() {
 
   const askQuestion = async () => {
     if (!question.trim()) return
-    
     setLoading(true)
     try {
       const res = await fetch('/api/ai/ask', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          question,
-          stepId: 'general'
-        })
+        body: JSON.stringify({ question })
       })
-      
       const data = await res.json()
       setAnswer(data.answer || 'Sorry, no response received.')
     } catch (error) {
@@ -36,12 +31,8 @@ export default function GlobalAIHelper() {
   }
 
   if (!isOpen) {
-    return (
-      <button onClick={() => setIsOpen(true)} className="fixed bottom-24 right-8 z-40 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full shadow-lg hover:from-blue-700 hover:to-purple-700 font-semibold animate-bounce hover:animate-none">Ask AI</button>
-    )
+    return (<button onClick={() => setIsOpen(true)} className="fixed bottom-24 right-8 z-50 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full shadow-lg hover:from-blue-700 hover:to-purple-700 font-semibold animate-bounce hover:animate-none">Ask AI</button>)
   }
 
-  return (
-    <div className="fixed bottom-24 right-8 z-40 w-96 bg-white rounded-lg shadow-2xl border-2 border-blue-500"><div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4 rounded-t-lg flex justify-between items-center"><h3 className="font-bold">AI Coding Tutor</h3><button onClick={() => setIsOpen(false)} className="text-2xl">×</button></div><div className="p-4 max-h-96 overflow-y-auto">{answer && (<div className="bg-blue-50 p-4 rounded-lg mb-4 whitespace-pre-wrap">{answer}</div>)}<textarea value={question} onChange={(e) => setQuestion(e.target.value)} placeholder="Ask me anything about coding..." className="w-full p-3 border rounded-lg resize-none" rows={4} /><button onClick={askQuestion} disabled={loading} className="w-full mt-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400">{loading ? 'Thinking...' : 'Ask AI'}</button><p className="text-xs text-gray-500 mt-2 text-center">Free AI help for coding</p></div></div>
-  )
+  return (<div className="fixed bottom-24 right-8 z-50 w-96 bg-slate-800 rounded-lg shadow-2xl border-2 border-blue-500"><div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4 rounded-t-lg flex justify-between items-center"><h3 className="font-bold">AI Coding Tutor</h3><button onClick={() => setIsOpen(false)} className="text-2xl hover:bg-white/20 rounded-full w-8 h-8">×</button></div><div className="p-4 max-h-96 overflow-y-auto bg-slate-800">{answer && (<div className="bg-slate-900 p-4 rounded-lg mb-4 border border-blue-500/30"><div className="text-sm text-gray-100 whitespace-pre-wrap">{answer}</div><button onClick={() => { setAnswer(''); setQuestion(''); }} className="text-xs text-blue-400 mt-2 hover:underline">Ask another question</button></div>)}<textarea value={question} onChange={(e) => setQuestion(e.target.value)} placeholder="Ask me anything about coding..." className="w-full p-3 bg-slate-900 text-white border border-slate-600 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-400" rows={4} /><button onClick={askQuestion} disabled={loading} className="w-full mt-2 px-4 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 disabled:from-gray-600 disabled:to-gray-600 font-semibold">{loading ? 'Thinking...' : 'Ask AI'}</button><p className="text-xs text-gray-400 mt-2 text-center">Free AI-powered help</p></div></div>)
 }
