@@ -1,4 +1,4 @@
-﻿import Link from 'next/link'
+import Link from 'next/link'
 import { auth } from './auth'
 
 export default async function Home() {
@@ -7,7 +7,7 @@ export default async function Home() {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="hero-gradient relative min-h-screen flex items-center justify-center overflow-hidden">
+      <section className="hero-gradient relative min-h-screen flex items-center justify-center overflow-hidden pt-20 md:pt-0">
         {/* Animated Background Elements */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-20 left-10 w-72 h-72 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-float"></div>
@@ -69,19 +69,19 @@ export default async function Home() {
           
           <div className="grid md:grid-cols-3 gap-8">
             <div className="card-modern group">
-              <div className="text-5xl mb-4 group-hover:scale-110 transition-transform">🎯</div>
+              <div className="text-5xl mb-4 group-hover:scale-110 transition-transform">??</div>
               <h3 className="text-2xl font-bold mb-3 text-white">Project-Based</h3>
               <p className="text-gray-400">Build real applications, not toy examples. Every project is production-ready.</p>
             </div>
 
             <div className="card-modern group">
-              <div className="text-5xl mb-4 group-hover:scale-110 transition-transform">✅</div>
+              <div className="text-5xl mb-4 group-hover:scale-110 transition-transform">?</div>
               <h3 className="text-2xl font-bold mb-3 text-white">Verified Learning</h3>
               <p className="text-gray-400">Pass quizzes, validate your code, earn certificates that prove your skills.</p>
             </div>
 
             <div className="card-modern group">
-              <div className="text-5xl mb-4 group-hover:scale-110 transition-transform">🎓</div>
+              <div className="text-5xl mb-4 group-hover:scale-110 transition-transform">??</div>
               <h3 className="text-2xl font-bold mb-3 text-white">Career Ready</h3>
               <p className="text-gray-400">Build a portfolio that gets you hired. Real projects, real impact.</p>
             </div>
@@ -109,3 +109,4 @@ export default async function Home() {
     </div>
   )
 }
+
