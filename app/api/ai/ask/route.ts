@@ -1,4 +1,4 @@
-﻿import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/app/auth'
 
 export async function POST(req: NextRequest) {
@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
         'X-Title': 'BuildFolio'
       },
       body: JSON.stringify({
-        model: 'meta-llama/llama-3.1-8b-instruct:free',
+        model: 'google/gemma-2-9b-it:free',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: question }
@@ -75,3 +75,4 @@ export async function POST(req: NextRequest) {
     })
   }
 }
+
