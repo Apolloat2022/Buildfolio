@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'openai/gpt-3.5-turbo',
+        model: 'policy/Buildfolio API',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: question }
@@ -74,4 +74,5 @@ export async function POST(req: NextRequest) {
     })
   }
 }
+
 
