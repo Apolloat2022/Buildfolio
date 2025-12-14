@@ -1,4 +1,4 @@
-﻿// scripts/fix-all-issues.ts
+﻿// scripts/fix-all-issues.ts - FIXED VERSION
 import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 
@@ -37,7 +37,7 @@ const QUIZ_BANK = [
 ]
 
 // Project categories and resume impacts
-const PROJECT_DETAILS = {
+const PROJECT_DETAILS: Record<string, {category: string, resumeImpact: string}> = {
   'weather-app': {
     category: 'api-integration',
     resumeImpact: 'Demonstrates API integration, async data handling, and responsive UI design skills.'
@@ -60,7 +60,8 @@ const PROJECT_DETAILS = {
   }
 }
 
-async function fixProject(slug) {
+// FIXED: Added parameter type
+async function fixProject(slug: string) {
   console.log('\n🔧 Fixing: ' + slug)
   
   const details = PROJECT_DETAILS[slug]
@@ -156,7 +157,7 @@ async function main() {
   await prisma.$disconnect()
 }
 
-main().catch(async (e) => {
+main().catch(async (e: any) => {
   console.error('❌ Error:', e.message)
   await prisma.$disconnect()
   process.exit(1)
