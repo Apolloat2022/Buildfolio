@@ -69,7 +69,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
           </div>
           
           {/* SIMPLIFIED - Comment out ProjectCompletionSection for now */}
-          {/* <ProjectCompletionSection projectSlug={slug} /> */}
+          {/* <ProjectCompletionSection_Working projectSlug={slug} /> */}
         </div>
       </div>
     )
@@ -77,3 +77,5 @@ export default async function ProjectDetailPage({ params }: PageProps) {
     return (<div className="p-8 bg-slate-900 min-h-screen"><h1 className="text-red-400">ERROR!</h1><pre className="bg-red-950/50 p-4 mt-4 text-red-300 rounded border border-red-500/50">{error instanceof Error ? error.message : 'Unknown'}</pre></div>)
   }
 }
+
+
