@@ -1,0 +1,7 @@
+﻿// PATCH for app/layout.tsx
+// Find the navigation section with other <Link> components
+// Add this link with other navigation links:
+<Link href="/certificates" className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-gray-100">
+  <span className="text-xl">🎓</span>
+  <span>Certificates</span>
+</Link>

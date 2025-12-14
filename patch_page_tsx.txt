@@ -1,0 +1,6 @@
+﻿// PATCH for app/projects/[slug]/page.tsx
+// Add this import if not present:
+import ProjectCompletionSection from '@/components/ProjectCompletionSection'
+
+// Then find the return statement and add before the last </div>:
+<ProjectCompletionSection projectSlug={params.slug} />
