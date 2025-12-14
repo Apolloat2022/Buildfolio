@@ -1,9 +1,9 @@
-﻿// scripts/expand-all-projects.ts - CLEAN VERSION
+﻿// scripts/expand-all-projects.ts - FIXED VERSION
 import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 
 // Step content for each project
-const STEP_TEMPLATES = {
+const STEP_TEMPLATES: Record<string, Array<{order: number, title: string, description: string}>> = {
   'weather-app': [
     {order: 4, title: '5-Day Forecast Display', description: 'Extend API to fetch and display 5-day forecast with charts'},
     {order: 5, title: 'City Search & Autocomplete', description: 'Add searchable city dropdown with debounced API calls'},
@@ -45,7 +45,8 @@ const QUIZ_TEMPLATES = [
   {question: 'Convert object to JSON string?', options: ['JSON.parse()', 'JSON.stringify()', 'object.toJSON()', 'stringifyJSON()'], correctIndex: 1, explanation: 'JSON.stringify() converts objects to JSON'}
 ]
 
-async function expandProject(slug) {
+// FIXED: Added parameter type
+async function expandProject(slug: string) {
   console.log('\n📝 Expanding: ' + slug)
   
   const project = await prisma.projectTemplate.findUnique({
@@ -98,7 +99,7 @@ async function expandProject(slug) {
           })
         }
         console.log('   📚 Added 5 quiz questions')
-      } catch (error) {
+      } catch (error: any) {
         console.log('   ⚠️ Error: ' + error.message)
       }
     }
@@ -131,7 +132,7 @@ async function main() {
   await prisma.$disconnect()
 }
 
-main().catch(async (e) => {
+main().catch(async (e: any) => {
   console.error('❌ Script failed:', e.message)
   await prisma.$disconnect()
   process.exit(1)
