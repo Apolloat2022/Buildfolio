@@ -1,11 +1,60 @@
-// prisma/schema.prisma - COMPLETE VERSION
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url      = env("DIRECT_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Gamification fields
+  totalPoints    Int       @default(0)
+  currentStreak  Int       @default(0)
+  longestStreak  Int       @default(0)
+  lastActiveDate DateTime?
+  level          Int       @default(1)
+
+  // Relations  // Relations
+  accounts         Account[]
+  sessions         Session[]
+  projects         Project[]
+  subscriptions    Subscription[]
+  startedProjects  StartedProject[]
+  showcases        Showcase[]
+  showcaseComments ShowcaseComment[]
+  resumeProfile    ResumeProfile?
+  badges           UserBadge[]
+  achievements     Achievement[]
+  questions        Question[]
+  replies          Reply[]
+  quizAttempts     QuizAttempt[]
+  aiUsage       AIUsage[]
+}
+
+model AIUsage {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stepId    String
+  question  String   @db.Text
+  answer    String   @db.Text
+  provider  String   @default("groq")
+  createdAt DateTime @default(now())
+  
+  @@index([userId])
+  @@index([createdAt])
 }
 
 model Account {
@@ -21,8 +70,7 @@ model Account {
   scope             String?
   id_token          String? @db.Text
   session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
@@ -35,62 +83,318 @@ model Session {
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String?   @unique
-  emailVerified DateTime?
-  image         String?
-  accounts      Account[]
-  sessions      Session[]
-  projects      Project[]
-  startedProjects StartedProject[]  // ADD THIS LINE
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
 }
 
 model Project {
   id          String   @id @default(cuid())
   title       String
-  description String
+  description String?
+  status      String   @default("planned")
   tags        String[]
   githubUrl   String?
   liveUrl     String?
-  status      String   @default("planned")
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  // Relations
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+}
+
+model Step {
+  id            String   @id @default(cuid())
+  order         Int
+  title         String
+  description   String?
+  codeSnippets  Json?
+  pitfalls      String[]
+  estimatedTime String?
+
+  // Gamification fields
+  videoUrl         String?
+  hints            Json?
+  estimatedMinutes Int?
+
+  // Relations
+  projectTemplateId String
+  projectTemplate   ProjectTemplate @relation(fields: [projectTemplateId], references: [id], onDelete: Cascade)
+  questions         Question[]
+  quizQuestions     QuizQuestion[]
+  quizAttempts      QuizAttempt[]
+  requiresQuiz      Boolean         @default(true)
+
+  @@unique([projectTemplateId, order])
+  @@index([projectTemplateId])
 }
 
 model ProjectTemplate {
-  id            String   @id @default(cuid())
-  title         String
-  description   String
-  difficulty    String   // beginner, intermediate, advanced
-  timeEstimate  String   // e.g., "20 hours"
-  technologies  String[]
-  resumeImpact  Int      // 1-5
-  steps         String[] // Step-by-step guide
-  slug          String   @unique
-  category      String   // e-commerce, social, healthcare, etc.
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  
+  id           String   @id @default(cuid())
+  slug         String   @unique
+  title        String
+  description  String?
+  difficulty   String   @default("beginner")
+  timeEstimate String?
+  technologies String[]
+  resumeImpact Int?
+  category     String?
+  steps        Step[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
   startedProjects StartedProject[]
-  
-  @@index([difficulty])
-  @@index([category])
+
+  @@index([slug])
 }
 
 model StartedProject {
-  id          String          @id @default(cuid())
-  userId      String
-  template    ProjectTemplate @relation(fields: [templateId], references: [id])
-  templateId  String
-  progress    Int             @default(0) // 0-100 percentage
-  status      String          @default("in-progress") // not-started, in-progress, completed
-  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                String    @id @default(cuid())
+  userId            String
+  projectTemplateId String
+  status            String    @default("not-started")
+  progress          Int       @default(0)
+  completedSteps    String[]  @default([])
+  startedAt         DateTime  @default(now())
+  lastActivityAt    DateTime  @default(now())
+  completedAt       DateTime?
+
+  // Gamification fields
+  timeSpentMinutes Int      @default(0)
+  lastWorkedOn     DateTime @default(now())
+  hintLevel        Int      @default(0)
+
+  // Relations
+  user            User            @relation(fields: [userId], references: [id])
+  projectTemplate ProjectTemplate @relation(fields: [projectTemplateId], references: [id])
+
+  @@unique([userId, projectTemplateId])
+  @@index([userId])
+  @@index([projectTemplateId])
   
-  @@unique([userId, templateId])
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
+  // GitHub Validation
+  githubRepoUrl      String?
+  repoValidatedAt    DateTime?
+  
+  // Showcase & Admin Approval
+  showcaseSubmitted  Boolean   @default(false)
+  showcaseId         String?
+  adminReviewed      Boolean   @default(false)
+  adminApprovedAt    DateTime?
+  adminApprovedBy    String?
+  adminNotes         String?   @db.Text
+  
+  certificateEligible Boolean  @default(false)
+  certificateIssuedAt DateTime?
 }
+
+model Subscription {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  plan      String   @default("FREE")
+  status    String   @default("ACTIVE")
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model Badge {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String
+  icon        String
+  criteria    String
+  points      Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  users UserBadge[]
+}
+
+model UserBadge {
+  id         String   @id @default(cuid())
+  userId     String
+  badgeId    String
+  unlockedAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badge Badge @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, badgeId])
+  @@index([userId])
+}
+
+model Achievement {
+  id          String   @id @default(cuid())
+  userId      String
+  title       String
+  description String
+  points      Int
+  icon        String
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Question {
+  id         String   @id @default(cuid())
+  stepId     String
+  userId     String
+  question   String   @db.Text
+  answer     String?  @db.Text
+  upvotes    Int      @default(0)
+  isAnswered Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  step    Step    @relation(fields: [stepId], references: [id], onDelete: Cascade)
+  replies Reply[]
+
+  @@index([stepId])
+  @@index([userId])
+}
+
+model Reply {
+  id         String   @id @default(cuid())
+  questionId String
+  userId     String
+  content    String   @db.Text
+  upvotes    Int      @default(0)
+  createdAt  DateTime @default(now())
+
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([questionId])
+}
+
+// Code Snippet Library
+model Snippet {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  code        String   @db.Text
+  language    String
+  category    String
+  tags        String[]
+  usageCount  Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  @@index([language])
+  @@index([category])
+}
+
+// Project Showcase Gallery
+model Showcase {
+  id          String   @id @default(cuid())
+  userId      String
+  projectSlug String
+  title       String
+  description String?  @db.Text
+  imageUrl    String?
+  githubUrl   String?
+  liveUrl     String?
+  tags        String[]
+  likes       Int      @default(0)
+  featured    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  user     User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  comments ShowcaseComment[]
+
+  @@index([userId])
+  @@index([projectSlug])
+  @@index([featured])
+}
+
+model ShowcaseComment {
+  id         String   @id @default(cuid())
+  showcaseId String
+  userId     String
+  content    String   @db.Text
+  createdAt  DateTime @default(now())
+
+  showcase Showcase @relation(fields: [showcaseId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([showcaseId])
+  @@index([userId])
+}
+
+model ResumeProfile {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  phone               String?
+  location            String?
+  website             String?
+  linkedin            String?
+  github              String?
+  professionalSummary String?  @db.Text
+  workExperience      Json?
+  education           Json?
+  certifications      Json?
+  skills              Json?
+  languages           String[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+// ============================================
+// CERTIFICATE VALIDATION SYSTEM
+// ============================================
+
+model QuizQuestion {
+  id     String @id @default(cuid())
+  stepId String
+  step   Step   @relation(fields: [stepId], references: [id], onDelete: Cascade)
+
+  question     String   @db.Text
+  options      String[]
+  correctIndex Int
+  explanation  String?  @db.Text
+
+  order      Int
+  difficulty String @default("medium")
+
+  createdAt DateTime @default(now())
+
+  @@unique([stepId, order])
+  @@index([stepId])
+}
+
+model QuizAttempt {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stepId String
+  step   Step   @relation(fields: [stepId], references: [id], onDelete: Cascade)
+
+  answers Json
+  score   Int
+  passed  Boolean
+
+  timeSpentSeconds Int
+  attemptNumber    Int
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, stepId])
+  @@index([userId])
+}
+
+
+
