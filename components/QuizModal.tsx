@@ -1,9 +1,8 @@
-﻿// components/QuizModal.tsx - FIXED VERSION
+﻿// components/QuizModal.tsx - SIMPLIFIED VERSION (no framer-motion)
 "use client"
 
 import { useState, useEffect } from "react"
 import { X, Check, XCircle, HelpCircle } from "lucide-react"
-import { motion, AnimatePresence } from "framer-motion"
 
 interface QuizModalProps {
   isOpen: boolean
@@ -115,14 +114,9 @@ export default function QuizModal({ isOpen, onClose, stepId, stepTitle }: QuizMo
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.9 }}
-        className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-white rounded-2xl shadow-2xl"
-      >
+      <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-white rounded-2xl shadow-2xl">
         {/* Header */}
-        <div className="sticky top-0 z-10 flex items-center justify-between p-6 border-b bg-white/95 backdrop-blur-sm">
+        <div className="sticky top-0 z-10 flex items-center justify-between p-6 border-b bg-white/95">
           <div>
             <h2 className="text-2xl font-bold text-gray-900">Step Quiz</h2>
             <p className="text-gray-700 mt-1">{stepTitle}</p>
@@ -234,11 +228,7 @@ export default function QuizModal({ isOpen, onClose, stepId, stepTitle }: QuizMo
 
               {/* Explanation (shown after submission) */}
               {isSubmitted && currentQuiz?.explanation && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="p-4 mb-6 bg-blue-50 border border-blue-200 rounded-xl"
-                >
+                <div className="p-4 mb-6 bg-blue-50 border border-blue-200 rounded-xl">
                   <div className="flex items-start">
                     <HelpCircle className="flex-shrink-0 w-5 h-5 text-blue-600 mr-2 mt-0.5" />
                     <div>
@@ -246,7 +236,7 @@ export default function QuizModal({ isOpen, onClose, stepId, stepTitle }: QuizMo
                       <p className="text-blue-800">{currentQuiz.explanation}</p>
                     </div>
                   </div>
-                </motion.div>
+                </div>
               )}
 
               {/* Navigation */}
@@ -347,7 +337,7 @@ export default function QuizModal({ isOpen, onClose, stepId, stepTitle }: QuizMo
             </div>
           </div>
         )}
-      </motion.div>
+      </div>
     </div>
   )
 }
