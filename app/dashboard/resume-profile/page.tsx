@@ -1,16 +1,14 @@
-﻿// Add this script to your resume-profile page
-// Save as: app/dashboard/resume-profile/page.jsx or .tsx
-
+﻿// app/dashboard/resume-profile/page.tsx - FIXED VERSION
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, FormEvent, ChangeEvent } from 'react'
 
 export default function ResumeProfilePage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [message, setMessage] = useState(null)
+  const [message, setMessage] = useState<{type: 'success' | 'error', text: string} | null>(null)
   
-  // Form state - ADD ALL YOUR FORM FIELDS HERE
+  // Form state
   const [formData, setFormData] = useState({
     phone: '',
     location: '',
@@ -18,7 +16,6 @@ export default function ResumeProfilePage() {
     linkedin: '',
     github: '',
     professionalSummary: '',
-    // For array fields that user types comma-separated
     skillsInput: '',
     languagesInput: ''
   })
@@ -34,7 +31,6 @@ export default function ResumeProfilePage() {
       const data = await res.json()
       
       if (res.ok && data) {
-        // Set form fields from fetched data
         setFormData({
           phone: data.phone || '',
           location: data.location || '',
@@ -53,7 +49,8 @@ export default function ResumeProfilePage() {
     }
   }
   
-  const handleSubmit = async (e) => {
+  // FIXED: Added FormEvent type
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setSaving(true)
     setMessage(null)
@@ -61,14 +58,15 @@ export default function ResumeProfilePage() {
     try {
       // Convert comma-separated strings to arrays
       const dataToSend = {
-        ...formData,
+        phone: formData.phone,
+        location: formData.location,
+        website: formData.website,
+        linkedin: formData.linkedin,
+        github: formData.github,
+        professionalSummary: formData.professionalSummary,
         skills: formData.skillsInput.split(',').map(s => s.trim()).filter(s => s),
         languages: formData.languagesInput.split(',').map(l => l.trim()).filter(l => l)
       }
-      
-      // Remove the input fields from the data
-      delete dataToSend.skillsInput
-      delete dataToSend.languagesInput
       
       const res = await fetch('/api/resume/profile', {
         method: 'POST',
@@ -80,7 +78,6 @@ export default function ResumeProfilePage() {
       
       if (res.ok) {
         setMessage({ type: 'success', text: 'Profile saved successfully!' })
-        // Refresh to show updated data (including auto-added certs)
         setTimeout(() => fetchProfile(), 1000)
       } else {
         setMessage({ type: 'error', text: result.error || 'Save failed' })
@@ -92,7 +89,8 @@ export default function ResumeProfilePage() {
     }
   }
   
-  const handleChange = (e) => {
+  // FIXED: Added ChangeEvent type
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
     setFormData(prev => ({ ...prev, [name]: value }))
   }
@@ -116,7 +114,6 @@ export default function ResumeProfilePage() {
         </div>
       )}
       
-      {/* YOUR EXISTING FORM - ADD onChange AND value PROPS */}
       <form onSubmit={handleSubmit}>
         {/* Contact Information */}
         <div className="bg-white p-6 rounded-lg shadow-sm border mb-6">
