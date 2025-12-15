@@ -1,15 +1,15 @@
-﻿// components/MarkCompleteButton.tsx - WORKING VERSION
-"use client"
+﻿// components/MarkCompleteButton.tsx - FIXED
+"use client";
 
-import { useState, useEffect } from 'react'
-import { Check, Loader2 } from 'lucide-react'
-import QuizModalComplete from '@/components/QuizModalComplete' './QuizModal'
+import { useState, useEffect, useCallback, useRef } from "react";
+import { Check, Loader2 } from "lucide-react";
+import QuizModalComplete from "@/components/QuizModalComplete";
 
 interface MarkCompleteButtonProps {
-  stepId: string
-  projectId: string
-  isCompleted: boolean
-  requiresQuiz?: boolean
+  stepId: string;
+  projectId: string;
+  isCompleted: boolean;
+  requiresQuiz?: boolean;
 }
 
 export default function MarkCompleteButton({
@@ -18,92 +18,103 @@ export default function MarkCompleteButton({
   isCompleted,
   requiresQuiz = true
 }: MarkCompleteButtonProps) {
-  const [isLoading, setIsLoading] = useState(false)
-  const [showQuiz, setShowQuiz] = useState(false)
-  const [quizQuestions, setQuizQuestions] = useState<any[]>([])
-  const [loadingQuiz, setLoadingQuiz] = useState(false)
-  const [isMounted, setIsMounted] = useState(false)
+  const [isLoading, setIsLoading] = useState(false);
+  const [showQuiz, setShowQuiz] = useState(false);
+  const [quizQuestions, setQuizQuestions] = useState<any[]>([]);
+  const [loadingQuiz, setLoadingQuiz] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+  const clickRef = useRef(false);
 
   useEffect(() => {
-    setIsMounted(true)
-  }, [])
+    setIsMounted(true);
+  }, []);
 
-  async function markComplete() {
-    setIsLoading(true)
+  const markComplete = useCallback(async () => {
+    if (clickRef.current) return;
+    clickRef.current = true;
+    
+    setIsLoading(true);
+    
     try {
-      const response = await fetch('/api/progress', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/progress", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ stepId, projectId })
-      })
+      });
       
       if (!response.ok) {
-        throw new Error('Failed to mark complete')
+        throw new Error("Failed to mark complete");
       }
       
       // Success - reload page
-      window.location.reload()
+      window.location.reload();
     } catch (error) {
-      console.error('Error:', error)
-      alert('Failed to mark step as complete')
-      setIsLoading(false)
+      console.error("Error:", error);
+      alert("Failed to mark step as complete");
+      setIsLoading(false);
+      clickRef.current = false;
     }
-  }
+  }, [stepId, projectId]);
 
-  async function loadQuiz() {
-    setLoadingQuiz(true)
+  const loadQuiz = useCallback(async () => {
+    if (clickRef.current) return;
+    clickRef.current = true;
+    
+    setLoadingQuiz(true);
     
     try {
-      const response = await fetch(`/api/quiz/questions?stepId=${stepId}`)
+      const response = await fetch(`/api/quiz/questions?stepId=${stepId}`);
       
       if (!response.ok) {
-        throw new Error(`Failed to load quiz: ${response.status}`)
+        throw new Error(`Failed to load quiz: ${response.status}`);
       }
       
-      const data = await response.json()
+      const data = await response.json();
       
       if (!data.questions || data.questions.length === 0) {
-        alert('No quiz questions found. Marking as complete.')
-        markComplete()
-        return
+        alert("No quiz questions found. Marking as complete.");
+        markComplete();
+        return;
       }
       
-      setQuizQuestions(data.questions)
-      setShowQuiz(true)
+      setQuizQuestions(data.questions);
+      setShowQuiz(true);
     } catch (error: any) {
-      console.error('Quiz error:', error)
-      alert(`Error: ${error.message}. Marking as complete.`)
-      markComplete()
+      console.error("Quiz error:", error);
+      alert(`Error: ${error.message}. Marking as complete.`);
+      markComplete();
     } finally {
-      setLoadingQuiz(false)
+      setLoadingQuiz(false);
+      clickRef.current = false;
     }
-  }
+  }, [stepId, markComplete]);
 
-  function handleClick() {
-    if (isCompleted) return
+  const handleClick = useCallback(() => {
+    if (isCompleted) return;
     
-    if (requiresQuiz) {
-      loadQuiz()
+    if (requiresQuiz && !showQuiz) {
+      loadQuiz();
     } else {
-      markComplete()
+      markComplete();
     }
-  }
+  }, [isCompleted, requiresQuiz, showQuiz, loadQuiz, markComplete]);
 
-  function handleQuizPass() {
-    setShowQuiz(false)
-    markComplete()
-  }
+  const handleQuizPass = useCallback(() => {
+    setShowQuiz(false);
+    setQuizQuestions([]);
+    markComplete();
+  }, [markComplete]);
 
-  function handleQuizClose() {
-    setShowQuiz(false)
-    setQuizQuestions([])
-  }
+  const handleQuizClose = useCallback(() => {
+    setShowQuiz(false);
+    setQuizQuestions([]);
+  }, []);
 
   // Don't render button until mounted
   if (!isMounted) {
     return (
       <div className="w-full py-3 px-4 bg-gray-200 rounded-lg animate-pulse"></div>
-    )
+    );
   }
 
   if (isCompleted) {
@@ -112,7 +123,7 @@ export default function MarkCompleteButton({
         <Check size={20} />
         Complete
       </button>
-    )
+    );
   }
 
   return (
@@ -125,10 +136,10 @@ export default function MarkCompleteButton({
         {isLoading || loadingQuiz ? (
           <>
             <Loader2 className="animate-spin" size={20} />
-            {loadingQuiz ? 'Loading Quiz...' : 'Processing...'}
+            {loadingQuiz ? "Loading Quiz..." : "Processing..."}
           </>
         ) : (
-          'Mark Complete'
+          "Mark Complete"
         )}
       </button>
       
@@ -141,6 +152,5 @@ export default function MarkCompleteButton({
         />
       )}
     </>
-  )
+  );
 }
-

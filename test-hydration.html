@@ -1,0 +1,61 @@
+﻿// test-hydration-fix.html
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Quiz Hydration Test</title>
+    <style>
+        .quiz-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: none;
+        }
+        .quiz-modal.open {
+            display: flex;
+        }
+        .text-dark {
+            color: #1f2937 !important; /* gray-800 */
+        }
+        .text-darker {
+            color: #111827 !important; /* gray-900 */
+        }
+    </style>
+</head>
+<body>
+    <h1>Testing Text Color Impact</h1>
+    <div id="app"></div>
+    
+    <script>
+        console.log('Testing if text color classes cause hydration issues...');
+        
+        // Simulate React hydration
+        const serverHTML = `
+            <div class="quiz-modal">
+                <div class="text-dark">Server Rendered Text</div>
+            </div>
+        `;
+        
+        const clientHTML = `
+            <div class="quiz-modal">
+                <div class="text-darker">Client Rendered Text</div>
+            </div>
+        `;
+        
+        console.log('Server:', serverHTML);
+        console.log('Client:', clientHTML);
+        console.log('Match?', serverHTML === clientHTML);
+        
+        // Test if text-gray-800 vs text-gray-900 causes mismatch
+        const textClasses = [
+            'text-gray-800', 'text-gray-900',
+            'dark:text-gray-100', 'dark:text-gray-200',
+            'text-black', 'text-gray-900'
+        ];
+        
+        console.log('Common text color classes:', textClasses);
+    </script>
+</body>
+</html>

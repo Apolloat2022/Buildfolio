@@ -1,28 +1,40 @@
-﻿// app/headers.ts - Block external scripts via headers
-import type { NextRequest } from 'next/server'
-
+﻿// app/headers.ts - Content Security Policy
 export function headers() {
   return [
     {
-      source: '/(.*)',
+      source: "/:path*",
       headers: [
         {
-          key: 'Content-Security-Policy',
-          value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self'; connect-src 'self'"
+          key: "Content-Security-Policy",
+          value: [
+            "default-src 'self'",
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+            "style-src 'self' 'unsafe-inline'",
+            "img-src 'self' data: https:",
+            "font-src 'self'",
+            "connect-src 'self'",
+            "frame-ancestors 'none'",
+            "base-uri 'self'",
+            "form-action 'self'"
+          ].join("; ")
         },
         {
-          key: 'X-Content-Type-Options',
-          value: 'nosniff'
+          key: "X-Content-Type-Options",
+          value: "nosniff"
         },
         {
-          key: 'X-Frame-Options',
-          value: 'DENY'
+          key: "X-Frame-Options",
+          value: "DENY"
         },
         {
-          key: 'Referrer-Policy',
-          value: 'strict-origin-when-cross-origin'
+          key: "X-XSS-Protection",
+          value: "1; mode=block"
+        },
+        {
+          key: "Referrer-Policy",
+          value: "strict-origin-when-cross-origin"
         }
       ]
     }
-  ]
+  ];
 }
