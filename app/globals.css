@@ -398,3 +398,27 @@ code {
     padding: 10px 24px;
   }
 }
+/* Add to your global CSS or styles/globals.css */
+.quiz-option-text {
+  color: #1f2937 !important; /* gray-800 */
+}
+
+.quiz-option-selected {
+  color: #1e40af !important; /* blue-800 */
+}
+
+.quiz-option-correct {
+  color: #065f46 !important; /* green-800 */
+}
+
+.quiz-option-incorrect {
+  color: #991b1b !important; /* red-800 */
+}
+
+/* Prevent text selection during clicks */
+.select-none {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
