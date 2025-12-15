@@ -1,4 +1,4 @@
-﻿// components/QuizModal.tsx - SAFE VERSION (handles undefined questions)
+﻿// components/QuizModal.tsx - HYDRATION-SAFE VERSION
 "use client"
 
 import { useState, useEffect, useCallback, useRef } from 'react'
@@ -14,76 +14,67 @@ interface QuizQuestion {
 
 interface QuizModalProps {
   stepId: string
-  questions?: QuizQuestion[]  // Make optional
+  questions?: QuizQuestion[]
   onPass: () => void
   onClose: () => void
 }
 
 export default function QuizModal({ stepId, questions = [], onPass, onClose }: QuizModalProps) {
-  // SAFE INITIALIZATION: Handle undefined questions
-  const questionsSafe = questions || []
+  // Track if we're on client
+  const [isClient, setIsClient] = useState(false)
   
-  // SINGLE state for all UI state - use questionsSafe.length
-  const [uiState, setUiState] = useState({
+  // Quiz state
+  const [uiState, setUiState] = useState(() => ({
     currentQuestion: 0,
-    selectedAnswers: new Array(questionsSafe.length).fill(-1),
+    selectedAnswers: new Array(questions.length).fill(-1),
     isSubmitted: false,
-    score: 0,
-    isVisible: false
-  })
+    score: 0
+  }))
   
-  const renderCount = useRef(0)
-  const isMounted = useRef(false)
+  const [isVisible, setIsVisible] = useState(false)
   const clickInProgress = useRef(false)
 
-  // Update single state property helper
-  const updateUiState = useCallback((updates: Partial<typeof uiState>) => {
-    setUiState(prev => ({ ...prev, ...updates }))
-  }, [])
-
-  // SINGLE useEffect for all side effects
+  // Initialize client-side only
   useEffect(() => {
-    if (isMounted.current) return
+    setIsClient(true)
+    setIsVisible(true)
     
-    isMounted.current = true
-    
-    // Prevent body scroll
+    // Store original body overflow
     const originalOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
     
-    // Add escape key listener
+    // Handle escape key
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         handleClose()
       }
     }
-    window.addEventListener('keydown', handleEscape)
     
-    // Set visible after a frame for smooth animation
-    requestAnimationFrame(() => {
-      updateUiState({ isVisible: true })
-    })
+    window.addEventListener('keydown', handleEscape)
     
     return () => {
       document.body.style.overflow = originalOverflow
       window.removeEventListener('keydown', handleEscape)
-      isMounted.current = false
     }
-  }, [updateUiState, handleClose])
+  }, [])
 
-  // Auto-pass if submitted and passed - use questionsSafe.length
+  // Update state helper
+  const updateUiState = useCallback((updates) => {
+    setUiState(prev => ({ ...prev, ...updates }))
+  }, [])
+
+  // Auto-pass if submitted and passed
   useEffect(() => {
-    if (uiState.isSubmitted && uiState.score >= Math.ceil(questionsSafe.length * 0.8)) {
+    if (uiState.isSubmitted && uiState.score >= Math.ceil(questions.length * 0.8)) {
       const timer = setTimeout(() => {
         onPass()
       }, 2000)
       
       return () => clearTimeout(timer)
     }
-  }, [uiState.isSubmitted, uiState.score, questionsSafe.length, onPass])
+  }, [uiState.isSubmitted, uiState.score, questions.length, onPass])
 
-  // FIX: Proper click handler with event prevention
-  const handleSelectAnswer = useCallback((questionIndex: number, optionIndex: number, e: React.MouseEvent) => {
+  const handleSelectAnswer = useCallback((questionIndex, optionIndex, e) => {
     e.preventDefault()
     e.stopPropagation()
     
@@ -110,7 +101,7 @@ export default function QuizModal({ stepId, questions = [], onPass, onClose }: Q
 
     let correctCount = 0
     uiState.selectedAnswers.forEach((answer, index) => {
-      if (answer === questionsSafe[index]?.correctIndex) {
+      if (answer === questions[index]?.correctIndex) {
         correctCount++
       }
     })
@@ -120,8 +111,8 @@ export default function QuizModal({ stepId, questions = [], onPass, onClose }: Q
       score: correctCount
     })
 
-    // Submit results - check if we have questions
-    if (questionsSafe.length > 0) {
+    // Submit results
+    if (questions.length > 0) {
       fetch("/api/quiz/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -129,24 +120,24 @@ export default function QuizModal({ stepId, questions = [], onPass, onClose }: Q
           stepId,
           answers: uiState.selectedAnswers,
           score: correctCount,
-          passed: correctCount >= Math.ceil(questionsSafe.length * 0.8)
+          passed: correctCount >= Math.ceil(questions.length * 0.8)
         })
-      })
+      }).catch(err => console.error('Submit error:', err))
     }
-  }, [uiState.selectedAnswers, questionsSafe, stepId, updateUiState])
+  }, [uiState.selectedAnswers, questions, stepId, updateUiState])
 
   const handleClose = useCallback(() => {
-    updateUiState({ isVisible: false })
+    setIsVisible(false)
     setTimeout(() => {
       onClose()
     }, 200)
-  }, [onClose, updateUiState])
+  }, [onClose])
 
   const handleNext = useCallback(() => {
-    if (uiState.currentQuestion < questionsSafe.length - 1) {
+    if (uiState.currentQuestion < questions.length - 1) {
       updateUiState({ currentQuestion: uiState.currentQuestion + 1 })
     }
-  }, [uiState.currentQuestion, questionsSafe.length, updateUiState])
+  }, [uiState.currentQuestion, questions.length, updateUiState])
 
   const handlePrev = useCallback(() => {
     if (uiState.currentQuestion > 0) {
@@ -154,19 +145,18 @@ export default function QuizModal({ stepId, questions = [], onPass, onClose }: Q
     }
   }, [uiState.currentQuestion, updateUiState])
 
-  // SAFE ACCESS: Use optional chaining and nullish coalescing
-  const currentQuiz = questionsSafe[uiState.currentQuestion]
-  const totalQuestions = questionsSafe.length
-  const passed = uiState.score >= Math.ceil(totalQuestions * 0.8)
-  const allAnswered = uiState.selectedAnswers.every(answer => answer !== -1)
+  // Don't render on server - return empty div
+  if (!isClient) {
+    return <div style={{ display: 'none' }} aria-hidden="true" />
+  }
 
-  // If no questions, show error state
-  if (questionsSafe.length === 0) {
+  // Handle no questions
+  if (questions.length === 0) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70">
         <div className="bg-white rounded-xl p-8 max-w-md">
           <h3 className="text-xl font-bold text-gray-900 mb-4">No Quiz Available</h3>
-          <p className="text-gray-600 mb-4">This quiz doesn't have any questions configured.</p>
+          <p className="text-gray-600 mb-4">No questions configured for this quiz.</p>
           <button
             onClick={onClose}
             className="w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
@@ -178,9 +168,14 @@ export default function QuizModal({ stepId, questions = [], onPass, onClose }: Q
     )
   }
 
-  // Smooth transitions
-  const opacityClass = uiState.isVisible ? 'opacity-100' : 'opacity-0'
-  const scaleClass = uiState.isVisible ? 'scale-100' : 'scale-95'
+  const currentQuiz = questions[uiState.currentQuestion]
+  const totalQuestions = questions.length
+  const passed = uiState.score >= Math.ceil(totalQuestions * 0.8)
+  const allAnswered = uiState.selectedAnswers.every(answer => answer !== -1)
+
+  // Animation classes
+  const opacityClass = isVisible ? 'opacity-100' : 'opacity-0'
+  const scaleClass = isVisible ? 'scale-100' : 'scale-95'
 
   return (
     <div 
@@ -232,7 +227,7 @@ export default function QuizModal({ stepId, questions = [], onPass, onClose }: Q
         <div className="p-6">
           <div className="mb-8">
             <h3 className="text-xl font-semibold text-gray-900 mb-4">
-              {currentQuiz?.question || "No question available"}
+              {currentQuiz?.question || "Question"}
             </h3>
             
             <div className="space-y-3">
@@ -257,7 +252,7 @@ export default function QuizModal({ stepId, questions = [], onPass, onClose }: Q
                   } else {
                     buttonClasses += "border-gray-200 bg-gray-50 "
                     circleClasses += "border-gray-300 "
-                    textClasses += "text-gray-700"
+                    textClasses += "text-gray-600"
                   }
                 } else if (isSelected) {
                   buttonClasses += "border-blue-500 bg-blue-50 "
@@ -272,25 +267,24 @@ export default function QuizModal({ stepId, questions = [], onPass, onClose }: Q
                 buttonClasses += uiState.isSubmitted ? "cursor-default" : "cursor-pointer"
                 
                 return (
-                  <div key={optionIndex} className="relative">
-                    <button
-                      onMouseDown={(e) => e.preventDefault()}
-                      onClick={(e) => handleSelectAnswer(uiState.currentQuestion, optionIndex, e)}
-                      disabled={uiState.isSubmitted || clickInProgress.current}
-                      className={`${buttonClasses} select-none active:scale-[0.99]`}
-                    >
-                      <div className="flex items-start">
-                        <div className={circleClasses}>
-                          {showResults && isCorrect && <Check size={14} className="text-white" />}
-                          {showResults && isSelected && !isCorrect && <XCircle size={14} className="text-white" />}
-                        </div>
-                        <span className={textClasses}>
-                          <span className="font-bold mr-2">{String.fromCharCode(65 + optionIndex)}.</span>
-                          {option}
-                        </span>
+                  <button
+                    key={optionIndex}
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={(e) => handleSelectAnswer(uiState.currentQuestion, optionIndex, e)}
+                    disabled={uiState.isSubmitted || clickInProgress.current}
+                    className={`${buttonClasses} select-none`}
+                  >
+                    <div className="flex items-start">
+                      <div className={circleClasses}>
+                        {showResults && isCorrect && <Check size={14} className="text-white" />}
+                        {showResults && isSelected && !isCorrect && <XCircle size={14} className="text-white" />}
                       </div>
-                    </button>
-                  </div>
+                      <span className={textClasses}>
+                        <span className="font-bold mr-2">{String.fromCharCode(65 + optionIndex)}.</span>
+                        {option}
+                      </span>
+                    </div>
+                  </button>
                 )
               })}
             </div>
@@ -302,26 +296,25 @@ export default function QuizModal({ stepId, questions = [], onPass, onClose }: Q
                 <HelpCircle className="flex-shrink-0 w-5 h-5 text-blue-600 mr-2 mt-0.5" />
                 <div>
                   <h4 className="font-semibold text-blue-900 mb-1">Explanation</h4>
-                  <p className="text-blue-800 font-medium">{currentQuiz.explanation}</p>
+                  <p className="text-blue-800">{currentQuiz.explanation}</p>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Navigation */}
           <div className="flex justify-between items-center pt-6 border-t">
             <div className="flex space-x-3">
               <button
                 onClick={handlePrev}
                 disabled={uiState.currentQuestion === 0}
-                className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg disabled:text-gray-400 font-medium"
+                className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg disabled:text-gray-400"
               >
                 Previous
               </button>
               <button
                 onClick={handleNext}
                 disabled={uiState.currentQuestion === totalQuestions - 1}
-                className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg disabled:text-gray-400 font-medium"
+                className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg disabled:text-gray-400"
               >
                 Next
               </button>
@@ -341,7 +334,7 @@ export default function QuizModal({ stepId, questions = [], onPass, onClose }: Q
                   Submit Quiz
                 </button>
               ) : passed ? (
-                <div className="text-green-800 font-semibold">
+                <div className="text-green-700 font-semibold">
                   ✅ Quiz Passed! Marking as complete...
                 </div>
               ) : (
@@ -349,7 +342,7 @@ export default function QuizModal({ stepId, questions = [], onPass, onClose }: Q
                   onClick={() => {
                     updateUiState({
                       currentQuestion: 0,
-                      selectedAnswers: new Array(questionsSafe.length).fill(-1),
+                      selectedAnswers: new Array(questions.length).fill(-1),
                       isSubmitted: false,
                       score: 0
                     })
