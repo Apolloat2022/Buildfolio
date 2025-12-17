@@ -1,156 +1,63 @@
-﻿// components/MarkCompleteButton.tsx - FIXED
-"use client";
-
-import { useState, useEffect, useCallback, useRef } from "react";
-import { Check, Loader2 } from "lucide-react";
-import QuizModalComplete from "@/components/QuizModalComplete";
+﻿"use client"
+import { useState } from 'react'
+import QuizModal from './QuizModal'
 
 interface MarkCompleteButtonProps {
-  stepId: string;
-  projectId: string;
-  isCompleted: boolean;
-  requiresQuiz?: boolean;
+  stepId: string
+  projectId: string
+  isCompleted: boolean
 }
 
-export default function MarkCompleteButton({
-  stepId,
-  projectId,
-  isCompleted,
-  requiresQuiz = true
-}: MarkCompleteButtonProps) {
-  const [isLoading, setIsLoading] = useState(false);
-  const [showQuiz, setShowQuiz] = useState(false);
-  const [quizQuestions, setQuizQuestions] = useState<any[]>([]);
-  const [loadingQuiz, setLoadingQuiz] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
-  const clickRef = useRef(false);
+export default function MarkCompleteButton({ stepId, projectId, isCompleted }: MarkCompleteButtonProps) {
+  const [showQuiz, setShowQuiz] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [completed, setCompleted] = useState(isCompleted)
 
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
+  const handleComplete = () => {
+    console.log('🎯 MARK COMPLETE CLICKED')
+    console.log('   stepId:', stepId)
+    console.log('   projectId:', projectId)
+    setShowQuiz(true)
+  }
 
-  const markComplete = useCallback(async () => {
-    if (clickRef.current) return;
-    clickRef.current = true;
-    
-    setIsLoading(true);
+  const handleQuizPass = async () => {
+    console.log('🎓 QUIZ PASSED! Calling mark-complete API...')
+    setLoading(true)
     
     try {
-      const response = await fetch("/api/progress", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      console.log('📡 Calling API with:', { stepId, projectId })
+      
+      const res = await fetch('/api/progress/mark-complete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ stepId, projectId })
-      });
+      })
       
-      if (!response.ok) {
-        throw new Error("Failed to mark complete");
+      console.log('📥 API Response Status:', res.status)
+      
+      const data = await res.json()
+      console.log('📥 API Response Data:', data)
+      
+      if (res.ok) {
+        console.log('✅ SUCCESS! Reloading page...')
+        setCompleted(true)
+        setShowQuiz(false)
+        window.location.reload()
+      } else {
+        console.error('❌ API ERROR:', data)
+        alert(`Error: ${data.error || 'Failed to save progress'}`)
       }
-      
-      // Success - reload page
-      window.location.reload();
     } catch (error) {
-      console.error("Error:", error);
-      alert("Failed to mark step as complete");
-      setIsLoading(false);
-      clickRef.current = false;
+      console.error('❌ FETCH ERROR:', error)
+      alert('Network error. Check console for details.')
     }
-  }, [stepId, projectId]);
-
-  const loadQuiz = useCallback(async () => {
-    if (clickRef.current) return;
-    clickRef.current = true;
     
-    setLoadingQuiz(true);
-    
-    try {
-      const response = await fetch(`/api/quiz/questions?stepId=${stepId}`);
-      
-      if (!response.ok) {
-        throw new Error(`Failed to load quiz: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      
-      if (!data.questions || data.questions.length === 0) {
-        alert("No quiz questions found. Marking as complete.");
-        markComplete();
-        return;
-      }
-      
-      setQuizQuestions(data.questions);
-      setShowQuiz(true);
-    } catch (error: any) {
-      console.error("Quiz error:", error);
-      alert(`Error: ${error.message}. Marking as complete.`);
-      markComplete();
-    } finally {
-      setLoadingQuiz(false);
-      clickRef.current = false;
-    }
-  }, [stepId, markComplete]);
-
-  const handleClick = useCallback(() => {
-    if (isCompleted) return;
-    
-    if (requiresQuiz && !showQuiz) {
-      loadQuiz();
-    } else {
-      markComplete();
-    }
-  }, [isCompleted, requiresQuiz, showQuiz, loadQuiz, markComplete]);
-
-  const handleQuizPass = useCallback(() => {
-    setShowQuiz(false);
-    setQuizQuestions([]);
-    markComplete();
-  }, [markComplete]);
-
-  const handleQuizClose = useCallback(() => {
-    setShowQuiz(false);
-    setQuizQuestions([]);
-  }, []);
-
-  // Don't render button until mounted
-  if (!isMounted) {
-    return (
-      <div className="w-full py-3 px-4 bg-gray-200 rounded-lg animate-pulse"></div>
-    );
+    setLoading(false)
   }
 
-  if (isCompleted) {
-    return (
-      <button disabled className="w-full py-3 px-4 bg-green-600 text-white rounded-lg flex items-center justify-center gap-2">
-        <Check size={20} />
-        Complete
-      </button>
-    );
+  if (completed) {
+    return (<div className="bg-green-100 text-green-800 px-6 py-3 rounded-lg font-semibold text-center">✓ Completed</div>)
   }
 
-  return (
-    <>
-      <button
-        onClick={handleClick}
-        disabled={isLoading || loadingQuiz}
-        className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-      >
-        {isLoading || loadingQuiz ? (
-          <>
-            <Loader2 className="animate-spin" size={20} />
-            {loadingQuiz ? "Loading Quiz..." : "Processing..."}
-          </>
-        ) : (
-          "Mark Complete"
-        )}
-      </button>
-      
-      {showQuiz && quizQuestions.length > 0 && (
-        <QuizModalComplete
-          stepId={stepId}
-          questions={quizQuestions}
-          onPass={handleQuizPass}
-          onClose={handleQuizClose}
-        />
-      )}
-    </>
-  );
+  return (<><button onClick={handleComplete} disabled={loading} className="w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 font-semibold">{loading ? 'Saving...' : 'Take Quiz & Mark Complete'}</button><QuizModal stepId={stepId} isOpen={showQuiz} onClose={() => { console.log('❌ Quiz closed without passing'); setShowQuiz(false); }} onPass={handleQuizPass} /></>)
 }
