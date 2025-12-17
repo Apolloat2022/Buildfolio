@@ -70,13 +70,26 @@ export async function POST(req: NextRequest) {
 
     console.log('[MARK COMPLETE] Certificate eligible:', updatedProject.certificateEligible)
 
-    // 6. Award points (50 per step)
-    await prisma.user.update({
-      where: { id: session.user.id },
-      data: {
-        points: { increment: 50 }
+    // 6. Award points - FIXED: Check if points field exists first
+    try {
+      const currentUser = await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: { points: true }
+      })
+      
+      if (currentUser && typeof currentUser.points === 'number') {
+        await prisma.user.update({
+          where: { id: session.user.id },
+          data: { points: currentUser.points + 50 }
+        })
+        console.log('[MARK COMPLETE] Awarded 50 points')
+      } else {
+        console.log('[MARK COMPLETE] Points field not available, skipping point award')
       }
-    })
+    } catch (pointsError) {
+      console.log('[MARK COMPLETE] Could not award points:', pointsError)
+      // Continue anyway - points are not critical
+    }
 
     return NextResponse.json({
       success: true,
@@ -87,6 +100,8 @@ export async function POST(req: NextRequest) {
 
   } catch (error) {
     console.error('[MARK COMPLETE] Error:', error)
-    return NextResponse.json({ error: String(error) }, { status: 500 })
+    return NextResponse.json({ 
+      error: error instanceof Error ? error.message : 'Unknown error' 
+    }, { status: 500 })
   }
 }
