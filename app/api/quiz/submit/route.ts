@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
     const { stepId, answers, score } = data
     const passed = score >= 80
 
-    // 1. Save quiz attempt
+    // Save quiz attempt
     const quizAttempt = await prisma.quizAttempt.create({
       data: {
         userId: session.user.id,
@@ -26,9 +26,9 @@ export async function POST(req: NextRequest) {
       }
     })
 
-    // 2. ONLY IF PASSED: Update progress
+    // If passed, update progress and mark step as completed
     if (passed) {
-      console.log('🎯 Quiz passed! Updating progress for step:', stepId)
+      console.log("[QUIZ] Step passed, updating progress...")
       
       // Find the project for this step
       const step = await prisma.step.findUnique({
@@ -36,78 +36,86 @@ export async function POST(req: NextRequest) {
         include: { projectTemplate: true }
       })
       
-      if (step?.projectTemplate) {
-        const project = step.projectTemplate
-        
-        // Ensure StartedProject exists
-        const startedProject = await prisma.startedProject.upsert({
-          where: {
-            userId_projectId: {
-              userId: session.user.id,
-              projectId: project.id
-            }
-          },
-          update: {},
-          create: {
-            userId: session.user.id,
-            projectId: project.id,
-            progress: 0,
-            certificateEligible: false
+      if (!step?.projectTemplate) {
+        throw new Error("Step or project not found")
+      }
+      
+      const project = step.projectTemplate
+      const userId = session.user.id
+      
+      // Ensure StartedProject exists
+      const startedProject = await prisma.startedProject.upsert({
+        where: {
+          userId_projectId: {
+            userId,
+            projectId: project.id
           }
-        })
-        
-        // Mark step as completed
+        },
+        update: {},
+        create: {
+          userId,
+          projectId: project.id,
+          progress: 0,
+          certificateEligible: false
+        }
+      })
+      
+      // Mark step as completed
+      try {
         await prisma.stepCompletion.upsert({
           where: {
             userId_stepId: {
-              userId: session.user.id,
-              stepId: stepId
+              userId,
+              stepId
             }
           },
           update: {},
           create: {
-            userId: session.user.id,
-            stepId: stepId
+            userId,
+            stepId
           }
         })
-        
-        // Calculate progress
-        const completedSteps = await prisma.stepCompletion.count({
-          where: {
-            userId: session.user.id,
-            step: { projectTemplateId: project.id }
-          }
-        })
-        
-        const totalSteps = await prisma.step.count({
-          where: { projectTemplateId: project.id }
-        })
-        
-        const newProgress = Math.round((completedSteps / totalSteps) * 100)
-        console.log(`📊 Progress: ${completedSteps}/${totalSteps} = ${newProgress}%`)
-        
-        // Update progress
+        console.log("[QUIZ] StepCompletion created/updated")
+      } catch (error) {
+        console.error("[QUIZ] StepCompletion error:", error)
+      }
+      
+      // Calculate progress
+      const completedSteps = await prisma.stepCompletion.count({
+        where: {
+          userId,
+          step: { projectTemplateId: project.id }
+        }
+      })
+      
+      const totalSteps = await prisma.step.count({
+        where: { projectTemplateId: project.id }
+      })
+      
+      const newProgress = totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0
+      console.log(`[QUIZ] Progress: ${completedSteps}/${totalSteps} = ${newProgress}%`)
+      
+      // Update progress
+      await prisma.startedProject.update({
+        where: { id: startedProject.id },
+        data: { progress: newProgress }
+      })
+      
+      // Award certificate at 100%
+      if (newProgress === 100) {
         await prisma.startedProject.update({
           where: { id: startedProject.id },
-          data: { progress: newProgress }
+          data: {
+            certificateEligible: true,
+            certificateIssuedAt: new Date()
+          }
         })
-        
-        // Award certificate at 100%
-        if (newProgress === 100) {
-          await prisma.startedProject.update({
-            where: { id: startedProject.id },
-            data: {
-              certificateEligible: true,
-              certificateIssuedAt: new Date()
-            }
-          })
-          console.log('🎉 CERTIFICATE AWARDED!')
-        }
+        console.log("[QUIZ] 🎉 CERTIFICATE AWARDED!")
       }
       
       // Award points
       await prisma.user.update({
-        where: { id: session.user.id },
+        where: { id: userId },
         data: { totalPoints: { increment: 50 } }
       })
     }
@@ -119,7 +127,7 @@ export async function POST(req: NextRequest) {
     })
 
   } catch (error) {
-    console.error('Quiz submission error:', error)
+    console.error("[QUIZ] API error:", error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
