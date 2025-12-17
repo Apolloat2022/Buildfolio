@@ -73,7 +73,7 @@ export default async function Home() {
               <div className="text-5xl mb-4 group-hover:scale-110 transition-transform">
                 <Briefcase className="h-12 w-12 text-blue-400" />
               </div>
-              <h3 className="text-2xl font-bold mb-3 text-white">Project-Based</h3>
+              <h3 className="text-2xl font-bold mb-3 text-white">Project Based</h3>
               <p className="text-gray-400">Build real applications, not toy examples. Every project is production-ready.</p>
             </div>
 
