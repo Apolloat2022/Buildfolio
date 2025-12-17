@@ -40,15 +40,16 @@ const REAL_TUTORIALS = {
     'https://www.youtube.com/embed/P7iPzK_jSPs', // Ratings
     'https://www.youtube.com/embed/i_xykr9J1w0'  // Export
   ],
-  'portfolio-builder': [
-    'https://www.youtube.com/embed/MFuwkrseXVE', // Portfolio Site
-    'https://www.youtube.com/embed/5rFJf2k2h5U', // Hero Section
-    'https://www.youtube.com/embed/m9W__jN20hI', // Projects Showcase
-    'https://www.youtube.com/embed/tG4p8_2c1ck', // Gallery
-    'https://www.youtube.com/embed/sPq0C73vqIU', // Contact Form
-    'https://www.youtube.com/embed/2kg0PI-9-1c', // Blog
-    'https://www.youtube.com/embed/x7mwVn2z3Sk'  // SEO
-  ]
+  
+    'ecommerce-store': [
+    'https://www.youtube.com/embed/__mSgDEOyv8',  // Step 1: Next.js E-commerce Setup
+    'https://www.youtube.com/embed/y7UWP0Zqgx0',  // Step 2: Prisma & Models
+    'https://www.youtube.com/embed/aZ7J7nqkQ8E',  // Step 3: Product Display
+    'https://www.youtube.com/embed/wfUg9zKlgqU',  // Step 4: Shopping Cart
+    'https://www.youtube.com/embed/UkF0P59lN6s',  // Step 5: Stripe Integration
+    'https://www.youtube.com/embed/1MTyCvS05V8',  // Step 6: Authentication
+    'https://www.youtube.com/embed/mTz0GXj8NN0'   // Step 7: Deployment
+  ],
 }
 
 async function addVideosToProject(slug: string) {
@@ -150,3 +151,5 @@ main().catch(async (e: any) => {
   await prisma.$disconnect()
   process.exit(1)
 })
+
+

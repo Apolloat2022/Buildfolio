@@ -1,0 +1,44 @@
+﻿# 🎯 GUIDE: FINDING REAL E-COMMERCE TUTORIAL VIDEOS
+# =================================================
+
+Search YouTube for these topics and copy the VIDEO ID from the URL:
+
+## Step 1: Next.js 14 Setup
+SEARCH: "Next.js 14 TypeScript setup tutorial 2024"
+URL Example: https://www.youtube.com/watch?v=VIDEO_ID_HERE
+REPLACE: REPLACE_WITH_REAL_ID_1
+
+## Step 2: Prisma & Database  
+SEARCH: "Prisma PostgreSQL database setup tutorial"
+URL Example: https://www.youtube.com/watch?v=VIDEO_ID_HERE
+REPLACE: REPLACE_WITH_REAL_ID_2
+
+## Step 3: Product UI with Tailwind
+SEARCH: "Tailwind CSS product grid ecommerce tutorial"
+URL Example: https://www.youtube.com/watch?v=VIDEO_ID_HERE  
+REPLACE: REPLACE_WITH_REAL_ID_3
+
+## Step 4: Shopping Cart (Zustand)
+SEARCH: "Zustand shopping cart React tutorial"
+URL Example: https://www.youtube.com/watch?v=VIDEO_ID_HERE
+REPLACE: REPLACE_WITH_REAL_ID_4
+
+## Step 5: Stripe Checkout
+SEARCH: "Stripe Next.js checkout integration tutorial"
+URL Example: https://www.youtube.com/watch?v=VIDEO_ID_HERE
+REPLACE: REPLACE_WITH_REAL_ID_5
+
+## Step 6: Authentication (NextAuth)
+SEARCH: "NextAuth.js authentication tutorial"
+URL Example: https://www.youtube.com/watch?v=VIDEO_ID_HERE
+REPLACE: REPLACE_WITH_REAL_ID_6
+
+## Step 7: Deployment (Vercel)
+SEARCH: "Deploy Next.js app to Vercel tutorial"
+URL Example: https://www.youtube.com/watch?v=VIDEO_ID_HERE
+REPLACE: REPLACE_WITH_REAL_ID_7
+
+# 🔧 HOW TO UPDATE:
+# 1. Open scripts/add-real-videos.ts
+# 2. Replace each REPLACE_WITH_REAL_ID_X with actual video IDs
+# 3. Run: npx tsx scripts/add-real-videos.ts
