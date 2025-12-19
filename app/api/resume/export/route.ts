@@ -5,6 +5,8 @@ import { renderToBuffer } from '@react-pdf/renderer'
 import { createElement } from 'react'
 import ResumePDF from '@/components/ResumePDF'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET() {
   try {
     const session = await auth()
