@@ -40,7 +40,16 @@ model User {
   questions        Question[]
   replies          Reply[]
   quizAttempts     QuizAttempt[]
-  aiUsage       AIUsage[]
+  aiUsage          AIUsage[]
+  
+  // Project Feature Relations
+  products         Product[]
+  todos            Todo[]
+  weatherLocations WeatherLocation[]
+  socialPosts      SocialPost[]
+  socialComments   SocialComment[]
+  recipes          Recipe[]
+  portfolioItems   PortfolioItem[]
 }
 
 model AIUsage {
@@ -393,6 +402,120 @@ model QuizAttempt {
   createdAt DateTime @default(now())
 
   @@index([userId, stepId])
+  @@index([userId])
+}
+
+// ============================================
+// PROJECT FEATURE MODELS
+// ============================================
+
+// 1. Ecommerce
+model Product {
+  id          String   @id @default(cuid())
+  name        String
+  description String
+  price       Decimal  @db.Decimal(10, 2)
+  imageUrl    String
+  stock       Int
+  category    String
+  createdAt   DateTime @default(now())
+  
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// 2. Todo App
+model Todo {
+  id        String   @id @default(cuid())
+  content   String
+  completed Boolean  @default(false)
+  priority  String   @default("medium") // low, medium, high
+  dueDate   DateTime?
+  createdAt DateTime @default(now())
+  
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// 3. Weather App
+model WeatherLocation {
+  id        String   @id @default(cuid())
+  city      String
+  country   String?
+  lat       Float?
+  lon       Float?
+  createdAt DateTime @default(now())
+  
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// 4. Social Dashboard
+model SocialPost {
+  id        String   @id @default(cuid())
+  content   String   @db.Text
+  imageUrl  String?
+  likes     Int      @default(0)
+  createdAt DateTime @default(now())
+  
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  comments  SocialComment[]
+
+  @@index([userId])
+}
+
+model SocialComment {
+  id        String   @id @default(cuid())
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+  
+  postId    String
+  post      SocialPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  
+  userId    String
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([postId])
+  @@index([userId])
+}
+
+// 5. Recipe Finder
+model Recipe {
+  id           String   @id @default(cuid())
+  title        String
+  description  String?  @db.Text
+  ingredients  Json // Stored as array of strings or objects
+  instructions String   @db.Text
+  cookingTime  Int?     // in minutes
+  difficulty   String   @default("medium")
+  imageUrl     String?
+  createdAt    DateTime @default(now())
+  
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// 6. Portfolio Builder (User's custom projects)
+model PortfolioItem {
+  id          String   @id @default(cuid())
+  title       String
+  description String?  @db.Text
+  imageUrl    String?
+  projectUrl  String?
+  createdAt   DateTime @default(now())
+  
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([userId])
 }
 
