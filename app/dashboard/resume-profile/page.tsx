@@ -94,17 +94,20 @@ export default function ResumeProfilePage() {
 
   // Dynamic Handlers
   const addExperience = () => setExperiences([...experiences, { id: Date.now().toString(), jobTitle: '', company: '', startDate: '', endDate: '', current: false, description: '' }])
+  const removeExperience = (id: string) => setExperiences(experiences.filter(exp => exp.id !== id))
+
   const addEducation = () => setEducation([...education, { id: Date.now().toString(), degree: '', school: '', graduationYear: '', description: '' }])
+  const removeEducation = (id: string) => setEducation(education.filter(edu => edu.id !== id))
 
   if (loading) return <div className="flex justify-center items-center h-64"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div></div>
 
   return (
     <div className="max-w-4xl mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-2">Resume Profile</h1>
+      <h1 className="text-3xl font-bold mb-2 text-gray-800">Resume Profile</h1>
       <p className="text-gray-600 mb-8">Complete your profile to generate a comprehensive resume</p>
 
       {message && (
-        <div className={`p-4 mb-6 rounded-lg ${message.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+        <div className={`p-4 mb-6 rounded-lg font-medium ${message.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
           {message.text}
         </div>
       )}
@@ -112,50 +115,63 @@ export default function ResumeProfilePage() {
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* CONTACT SECTION */}
         <div className="bg-white p-6 rounded-lg shadow-sm border">
-          <h2 className="text-xl font-semibold mb-4">Contact Information</h2>
+          <h2 className="text-xl font-semibold mb-4 text-gray-700 border-b pb-2">Contact Information</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <input type="text" placeholder="Phone" value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value})} className="border p-2 rounded" />
-            <input type="text" placeholder="Location" value={formData.location} onChange={(e) => setFormData({...formData, location: e.target.value})} className="border p-2 rounded" />
-            <input type="url" placeholder="LinkedIn URL" value={formData.linkedin} onChange={(e) => setFormData({...formData, linkedin: e.target.value})} className="border p-2 rounded" />
-            <input type="url" placeholder="GitHub URL" value={formData.github} onChange={(e) => setFormData({...formData, github: e.target.value})} className="border p-2 rounded" />
+            <input type="text" placeholder="Phone" value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value})} className="border p-2 rounded focus:ring-2 focus:ring-blue-400 outline-none" />
+            <input type="text" placeholder="Location" value={formData.location} onChange={(e) => setFormData({...formData, location: e.target.value})} className="border p-2 rounded focus:ring-2 focus:ring-blue-400 outline-none" />
+            <input type="url" placeholder="LinkedIn URL" value={formData.linkedin} onChange={(e) => setFormData({...formData, linkedin: e.target.value})} className="border p-2 rounded focus:ring-2 focus:ring-blue-400 outline-none" />
+            <input type="url" placeholder="GitHub URL" value={formData.github} onChange={(e) => setFormData({...formData, github: e.target.value})} className="border p-2 rounded focus:ring-2 focus:ring-blue-400 outline-none" />
           </div>
+        </div>
+
+        {/* SUMMARY SECTION */}
+        <div className="bg-white p-6 rounded-lg shadow-sm border">
+          <h2 className="text-xl font-semibold mb-4 text-gray-700 border-b pb-2">Professional Summary</h2>
+          <textarea 
+            placeholder="Tell us about your professional background..." 
+            value={formData.professionalSummary} 
+            onChange={(e) => setFormData({...formData, professionalSummary: e.target.value})} 
+            className="border p-2 rounded w-full h-32 focus:ring-2 focus:ring-blue-400 outline-none"
+          />
         </div>
 
         {/* WORK EXPERIENCE SECTION */}
         <div className="bg-white p-6 rounded-lg shadow-sm border">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">Work Experience</h2>
-            <button type="button" onClick={addExperience} className="text-blue-600 font-medium">+ Add Experience</button>
+          <div className="flex justify-between items-center mb-4 border-b pb-2">
+            <h2 className="text-xl font-semibold text-gray-700">Work Experience</h2>
+            <button type="button" onClick={addExperience} className="text-blue-600 font-bold hover:text-blue-800 transition-colors">+ Add Experience</button>
           </div>
           {experiences.map((exp, idx) => (
-            <div key={exp.id} className="border-b pb-4 mb-4 last:border-0">
-              <div className="grid grid-cols-2 gap-4">
+            <div key={exp.id} className="bg-gray-50 p-4 rounded-lg mb-4 relative border border-gray-100">
+              <button type="button" onClick={() => removeExperience(exp.id)} className="absolute top-2 right-2 text-red-500 hover:text-red-700 text-sm font-bold">Remove</button>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                 <input type="text" placeholder="Job Title" value={exp.jobTitle} onChange={(e) => {
                   const newExp = [...experiences]; newExp[idx].jobTitle = e.target.value; setExperiences(newExp);
-                }} className="border p-2 rounded" />
+                }} className="border p-2 rounded bg-white" />
                 <input type="text" placeholder="Company" value={exp.company} onChange={(e) => {
                   const newExp = [...experiences]; newExp[idx].company = e.target.value; setExperiences(newExp);
-                }} className="border p-2 rounded" />
+                }} className="border p-2 rounded bg-white" />
               </div>
             </div>
           ))}
-        </div>
+        </section>
 
         {/* EDUCATION SECTION */}
         <div className="bg-white p-6 rounded-lg shadow-sm border">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">Education</h2>
-            <button type="button" onClick={addEducation} className="text-blue-600 font-medium">+ Add Education</button>
+          <div className="flex justify-between items-center mb-4 border-b pb-2">
+            <h2 className="text-xl font-semibold text-gray-700">Education</h2>
+            <button type="button" onClick={addEducation} className="text-blue-600 font-bold hover:text-blue-800 transition-colors">+ Add Education</button>
           </div>
           {education.map((edu, idx) => (
-            <div key={edu.id} className="border-b pb-4 mb-4 last:border-0">
-              <div className="grid grid-cols-2 gap-4">
+            <div key={edu.id} className="bg-gray-50 p-4 rounded-lg mb-4 relative border border-gray-100">
+              <button type="button" onClick={() => removeEducation(edu.id)} className="absolute top-2 right-2 text-red-500 hover:text-red-700 text-sm font-bold">Remove</button>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                 <input type="text" placeholder="Degree" value={edu.degree} onChange={(e) => {
                   const newEdu = [...education]; newEdu[idx].degree = e.target.value; setEducation(newEdu);
-                }} className="border p-2 rounded" />
+                }} className="border p-2 rounded bg-white" />
                 <input type="text" placeholder="School" value={edu.school} onChange={(e) => {
                   const newEdu = [...education]; newEdu[idx].school = e.target.value; setEducation(newEdu);
-                }} className="border p-2 rounded" />
+                }} className="border p-2 rounded bg-white" />
               </div>
             </div>
           ))}
@@ -163,16 +179,17 @@ export default function ResumeProfilePage() {
 
         {/* SKILLS & LANGUAGES */}
         <div className="bg-white p-6 rounded-lg shadow-sm border">
-          <h2 className="text-xl font-semibold mb-2">Skills</h2>
-          <input type="text" placeholder="React, Node.js, TypeScript..." value={formData.skillsInput} onChange={(e) => setFormData({...formData, skillsInput: e.target.value})} className="border p-2 rounded w-full mb-4" />
+          <h2 className="text-xl font-semibold mb-2 text-gray-700">Skills</h2>
+          <p className="text-xs text-gray-500 mb-2">Separate skills with commas (e.g., React, Node, Python)</p>
+          <input type="text" placeholder="Skills..." value={formData.skillsInput} onChange={(e) => setFormData({...formData, skillsInput: e.target.value})} className="border p-2 rounded w-full mb-4" />
           
-          <h2 className="text-xl font-semibold mb-2">Languages</h2>
-          <input type="text" placeholder="English (Native), Spanish (Fluent)..." value={formData.languagesInput} onChange={(e) => setFormData({...formData, languagesInput: e.target.value})} className="border p-2 rounded w-full" />
+          <h2 className="text-xl font-semibold mb-2 text-gray-700">Languages</h2>
+          <input type="text" placeholder="Languages..." value={formData.languagesInput} onChange={(e) => setFormData({...formData, languagesInput: e.target.value})} className="border p-2 rounded w-full" />
         </div>
 
         <div className="flex justify-end gap-4">
-          <button type="button" onClick={fetchProfile} className="px-6 py-2 border rounded">Reset</button>
-          <button type="submit" disabled={saving} className="px-6 py-2 bg-blue-600 text-white rounded disabled:opacity-50">
+          <button type="button" onClick={fetchProfile} className="px-6 py-2 border rounded font-medium hover:bg-gray-50">Reset</button>
+          <button type="submit" disabled={saving} className="px-6 py-2 bg-blue-600 text-white rounded font-bold hover:bg-blue-700 disabled:opacity-50 transition-colors">
             {saving ? 'Saving...' : 'Save Resume Profile'}
           </button>
         </div>
