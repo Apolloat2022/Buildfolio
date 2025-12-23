@@ -33,23 +33,57 @@ export default async function DashboardPage() {
           <GamificationDashboard />
         </div>
 
+        {/* Optional: Resume Optimizer Promo Card */}
+        {/*
+        <div className="bg-gradient-to-r from-pink-500 to-purple-600 rounded-xl shadow-lg p-6 mb-8 text-white">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-bold mb-2">🎯 Optimize Your Resume</h2>
+              <p className="text-white/90 mb-4">
+                Match your resume to job descriptions and get a competitive edge
+              </p>
+              <Link
+                href="/resume-optimizer"
+                className="inline-block px-6 py-3 bg-white text-purple-600 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
+              >
+                Start Optimizing →
+              </Link>
+            </div>
+            <div className="text-6xl hidden md:block">📊</div>
+          </div>
+        </div>
+        */}
+
         {/* Your Projects */}
         <div className="bg-white rounded-xl shadow-lg p-6">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
             <h2 className="text-2xl font-bold text-gray-900">Your Projects</h2>
-            <Link 
-              href="/projects"
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-            >
-              Browse All Projects
-            </Link>
-                        <Link
-              href="/dashboard/resume-profile"
-              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
-            >
-              Complete Resume Profile
-            </Link>
-            <ExportResumeButton />
+            
+            <div className="flex gap-3 flex-wrap">
+              <Link 
+                href="/projects"
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Browse All Projects
+              </Link>
+              
+              <Link
+                href="/dashboard/resume-profile"
+                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+              >
+                Complete Resume Profile
+              </Link>
+              
+              {/* NEW: Resume Optimizer Button */}
+              <Link
+                href="/resume-optimizer"
+                className="px-4 py-2 bg-gradient-to-r from-pink-600 to-purple-600 text-white rounded-lg hover:from-pink-700 hover:to-purple-700 transition-colors font-semibold"
+              >
+                📊 Optimize Resume
+              </Link>
+              
+              <ExportResumeButton />
+            </div>
           </div>
 
           {startedProjects.length === 0 ? (
@@ -104,12 +138,3 @@ export default async function DashboardPage() {
     </div>
   )
 }
-
-
-
-
-
-
-
-
-
