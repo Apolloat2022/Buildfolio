@@ -1,14 +1,24 @@
-﻿// app/dashboard/resume-profile/page.tsx - FIXED VERSION
 "use client"
 
-import { useState, useEffect, FormEvent, ChangeEvent } from 'react'
+import { useState, useEffect, FormEvent } from 'react'
+
+interface Experience {
+  id: string
+  jobTitle: string
+  company: string
+}
+
+interface Education {
+  id: string
+  degree: string
+  school: string
+}
 
 export default function ResumeProfilePage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState<{type: 'success' | 'error', text: string} | null>(null)
-  
-  // Form state
+
   const [formData, setFormData] = useState({
     phone: '',
     location: '',
@@ -19,227 +29,163 @@ export default function ResumeProfilePage() {
     skillsInput: '',
     languagesInput: ''
   })
-  
-  // Load profile on page load
+
+  const [experiences, setExperiences] = useState<Experience[]>([])
+  const [education, setEducation] = useState<Education[]>([])
+
   useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const res = await fetch('/api/resume/profile')
+        const data = await res.json()
+        if (res.ok && data) {
+          setFormData({
+            phone: data.phone || '',
+            location: data.location || '',
+            website: data.website || '',
+            linkedin: data.linkedin || '',
+            github: data.github || '',
+            professionalSummary: data.professionalSummary || '',
+            skillsInput: Array.isArray(data.skills) ? data.skills.join(', ') : '',
+            languagesInput: Array.isArray(data.languages) ? data.languages.join(', ') : ''
+          })
+          setExperiences(data.workExperience || [])
+          setEducation(data.education || [])
+        }
+      } catch (error) {
+        console.error('Error loading profile:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
     fetchProfile()
   }, [])
-  
-  const fetchProfile = async () => {
-    try {
-      const res = await fetch('/api/resume/profile')
-      const data = await res.json()
-      
-      if (res.ok && data) {
-        setFormData({
-          phone: data.phone || '',
-          location: data.location || '',
-          website: data.website || '',
-          linkedin: data.linkedin || '',
-          github: data.github || '',
-          professionalSummary: data.professionalSummary || '',
-          skillsInput: Array.isArray(data.skills) ? data.skills.join(', ') : '',
-          languagesInput: Array.isArray(data.languages) ? data.languages.join(', ') : ''
-        })
-      }
-    } catch (error) {
-      console.error('Error loading profile:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
-  
-  // FIXED: Added FormEvent type
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+
+  const addExperience = () => setExperiences([...experiences, { id: Date.now().toString(), jobTitle: '', company: '' }])
+  const removeExperience = (id: string) => setExperiences(experiences.filter(exp => exp.id !== id))
+  const addEducation = () => setEducation([...education, { id: Date.now().toString(), degree: '', school: '' }])
+  const removeEducation = (id: string) => setEducation(education.filter(edu => edu.id !== id))
+
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     setSaving(true)
-    setMessage(null)
-    
     try {
-      // Convert comma-separated strings to arrays
-      const dataToSend = {
-        phone: formData.phone,
-        location: formData.location,
-        website: formData.website,
-        linkedin: formData.linkedin,
-        github: formData.github,
-        professionalSummary: formData.professionalSummary,
-        skills: formData.skillsInput.split(',').map(s => s.trim()).filter(s => s),
-        languages: formData.languagesInput.split(',').map(l => l.trim()).filter(l => l)
-      }
-      
       const res = await fetch('/api/resume/profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(dataToSend)
+        body: JSON.stringify({
+          ...formData,
+          skills: formData.skillsInput.split(',').map(s => s.trim()).filter(s => s),
+          languages: formData.languagesInput.split(',').map(l => l.trim()).filter(l => l),
+          workExperience: experiences,
+          education: education
+        })
       })
-      
-      const result = await res.json()
-      
-      if (res.ok) {
-        setMessage({ type: 'success', text: 'Profile saved successfully!' })
-        setTimeout(() => fetchProfile(), 1000)
-      } else {
-        setMessage({ type: 'error', text: result.error || 'Save failed' })
-      }
-    } catch (error) {
-      setMessage({ type: 'error', text: 'Network error. Please try again.' })
+      if (res.ok) setMessage({ type: 'success', text: 'Profile Saved Successfully!' })
+    } catch (err) {
+      setMessage({ type: 'error', text: 'Save failed' })
     } finally {
       setSaving(false)
     }
   }
-  
-  // FIXED: Added ChangeEvent type
-  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
-  }
-  
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    )
-  }
-  
+
+  if (loading) return <div className="p-20 text-center text-blue-600 font-bold">Loading Your Profile...</div>
+
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-2">Resume Profile</h1>
-      <p className="text-gray-600 mb-8">Complete your profile to generate a comprehensive resume</p>
-      
+    <div className="max-w-4xl mx-auto p-6 bg-gray-50 min-h-screen pb-20">
+      <div className="bg-blue-600 p-8 rounded-t-xl text-white mb-6 shadow-lg">
+        <h1 className="text-3xl font-bold">Resume Builder Profile</h1>
+        <p className="opacity-90 text-sm">Fill out your details below to sync with your master resume.</p>
+      </div>
+
       {message && (
-        <div className={`p-4 mb-6 rounded-lg ${message.type === 'success' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}>
+        <div className={`p-4 mb-6 rounded-lg font-bold text-center border-2 ${message.type === 'success' ? 'bg-green-50 border-green-500 text-green-700' : 'bg-red-50 border-red-500 text-red-700'}`}>
           {message.text}
         </div>
       )}
-      
-      <form onSubmit={handleSubmit}>
-        {/* Contact Information */}
-        <div className="bg-white p-6 rounded-lg shadow-sm border mb-6">
-          <h2 className="text-xl font-semibold mb-4">Contact Information</h2>
-          
+
+      <form onSubmit={handleSubmit} className="space-y-8">
+        {/* 1. CONTACT INFO */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+          <h2 className="text-xl font-bold mb-4 text-gray-800 border-b pb-2">Contact Information</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-              <input
-                type="text"
-                name="phone"
-                value={formData.phone}
-                onChange={handleChange}
-                className="w-full p-3 border border-gray-300 rounded-lg"
-                placeholder="+1 (555) 123-4567"
-              />
+            <input className="border p-2 rounded-lg" placeholder="Phone" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
+            <input className="border p-2 rounded-lg" placeholder="Location (City, State)" value={formData.location} onChange={e => setFormData({...formData, location: e.target.value})} />
+            <input className="border p-2 rounded-lg" placeholder="Website" value={formData.website} onChange={e => setFormData({...formData, website: e.target.value})} />
+            <input className="border p-2 rounded-lg" placeholder="LinkedIn URL" value={formData.linkedin} onChange={e => setFormData({...formData, linkedin: e.target.value})} />
+            <input className="border p-2 rounded-lg" placeholder="GitHub URL" value={formData.github} onChange={e => setFormData({...formData, github: e.target.value})} />
+          </div>
+        </div>
+
+        {/* 2. PROFESSIONAL SUMMARY */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+          <h2 className="text-xl font-bold mb-4 text-gray-800 border-b pb-2">Professional Summary</h2>
+          <textarea 
+            className="border p-3 rounded-lg w-full h-32 focus:ring-2 focus:ring-blue-500 outline-none" 
+            placeholder="Summarize your professional experience and key achievements..."
+            value={formData.professionalSummary} 
+            onChange={e => setFormData({...formData, professionalSummary: e.target.value})} 
+          />
+        </div>
+
+        {/* 3. WORK EXPERIENCE */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+          <div className="flex justify-between items-center mb-4 border-b pb-2">
+            <h2 className="text-xl font-bold text-gray-800">Work Experience</h2>
+            <button type="button" onClick={addExperience} className="bg-blue-600 text-white px-4 py-1.5 rounded-lg font-bold text-sm hover:bg-blue-700 transition-colors">+ Add Job</button>
+          </div>
+          {experiences.length === 0 && <p className="text-gray-400 italic text-center py-4 text-sm">No work experience added yet.</p>}
+          {experiences.map((exp, idx) => (
+            <div key={exp.id} className="flex flex-col md:flex-row gap-2 mb-4 bg-gray-50 p-3 rounded-lg relative">
+              <input className="border p-2 rounded-lg flex-1 bg-white" placeholder="Job Title" value={exp.jobTitle} onChange={e => {
+                const newExp = [...experiences]; newExp[idx].jobTitle = e.target.value; setExperiences(newExp);
+              }} />
+              <input className="border p-2 rounded-lg flex-1 bg-white" placeholder="Company" value={exp.company} onChange={e => {
+                const newExp = [...experiences]; newExp[idx].company = e.target.value; setExperiences(newExp);
+              }} />
+              <button type="button" onClick={() => removeExperience(exp.id)} className="bg-red-50 text-red-500 px-3 py-2 rounded-lg font-bold hover:bg-red-100 transition-colors">Delete</button>
             </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Location (City, State)</label>
-              <input
-                type="text"
-                name="location"
-                value={formData.location}
-                onChange={handleChange}
-                className="w-full p-3 border border-gray-300 rounded-lg"
-                placeholder="San Francisco, CA"
-              />
+          ))}
+        </div>
+
+        {/* 4. EDUCATION */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+          <div className="flex justify-between items-center mb-4 border-b pb-2">
+            <h2 className="text-xl font-bold text-gray-800">Education</h2>
+            <button type="button" onClick={addEducation} className="bg-blue-600 text-white px-4 py-1.5 rounded-lg font-bold text-sm hover:bg-blue-700 transition-colors">+ Add Education</button>
+          </div>
+          {education.length === 0 && <p className="text-gray-400 italic text-center py-4 text-sm">No education added yet.</p>}
+          {education.map((edu, idx) => (
+            <div key={edu.id} className="flex flex-col md:flex-row gap-2 mb-4 bg-gray-50 p-3 rounded-lg">
+              <input className="border p-2 rounded-lg flex-1 bg-white" placeholder="Degree/Certification" value={edu.degree} onChange={e => {
+                const newEdu = [...education]; newEdu[idx].degree = e.target.value; setEducation(newEdu);
+              }} />
+              <input className="border p-2 rounded-lg flex-1 bg-white" placeholder="School" value={edu.school} onChange={e => {
+                const newEdu = [...education]; newEdu[idx].school = e.target.value; setEducation(newEdu);
+              }} />
+              <button type="button" onClick={() => removeEducation(edu.id)} className="bg-red-50 text-red-500 px-3 py-2 rounded-lg font-bold hover:bg-red-100 transition-colors">Delete</button>
             </div>
-            
+          ))}
+        </div>
+
+        {/* 5. SKILLS & LANGUAGES */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+          <h2 className="text-xl font-bold mb-4 text-gray-800 border-b pb-2">Skills & Languages</h2>
+          <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Website</label>
-              <input
-                type="url"
-                name="website"
-                value={formData.website}
-                onChange={handleChange}
-                className="w-full p-3 border border-gray-300 rounded-lg"
-                placeholder="https://yourportfolio.com"
-              />
+              <label className="text-sm font-semibold text-gray-600 block mb-1">Additional Skills (Comma-separated)</label>
+              <input className="border p-2 rounded-lg w-full" placeholder="Project Management, Python, AWS..." value={formData.skillsInput} onChange={e => setFormData({...formData, skillsInput: e.target.value})} />
             </div>
-            
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">LinkedIn URL</label>
-              <input
-                type="url"
-                name="linkedin"
-                value={formData.linkedin}
-                onChange={handleChange}
-                className="w-full p-3 border border-gray-300 rounded-lg"
-                placeholder="https://linkedin.com/in/yourname"
-              />
-            </div>
-            
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">GitHub URL</label>
-              <input
-                type="url"
-                name="github"
-                value={formData.github}
-                onChange={handleChange}
-                className="w-full p-3 border border-gray-300 rounded-lg"
-                placeholder="https://github.com/yourusername"
-              />
+              <label className="text-sm font-semibold text-gray-600 block mb-1">Languages (Comma-separated)</label>
+              <input className="border p-2 rounded-lg w-full" placeholder="English (Native), French (Bilingual)..." value={formData.languagesInput} onChange={e => setFormData({...formData, languagesInput: e.target.value})} />
             </div>
           </div>
         </div>
-        
-        {/* Professional Summary */}
-        <div className="bg-white p-6 rounded-lg shadow-sm border mb-6">
-          <h2 className="text-xl font-semibold mb-4">Professional Summary</h2>
-          <textarea
-            name="professionalSummary"
-            value={formData.professionalSummary}
-            onChange={handleChange}
-            rows={4}
-            className="w-full p-3 border border-gray-300 rounded-lg"
-            placeholder="Brief overview of your professional background and goals..."
-          />
-        </div>
-        
-        {/* Additional Skills */}
-        <div className="bg-white p-6 rounded-lg shadow-sm border mb-6">
-          <h2 className="text-xl font-semibold mb-4">Additional Skills</h2>
-          <p className="text-gray-600 text-sm mb-3">List additional skills not covered in projects (comma-separated)</p>
-          <input
-            type="text"
-            name="skillsInput"
-            value={formData.skillsInput}
-            onChange={handleChange}
-            className="w-full p-3 border border-gray-300 rounded-lg"
-            placeholder="Project Management, Agile, Public Speaking, UI/UX Design"
-          />
-        </div>
-        
-        {/* Languages */}
-        <div className="bg-white p-6 rounded-lg shadow-sm border mb-6">
-          <h2 className="text-xl font-semibold mb-4">Languages</h2>
-          <p className="text-gray-600 text-sm mb-3">List languages and proficiency (comma-separated)</p>
-          <input
-            type="text"
-            name="languagesInput"
-            value={formData.languagesInput}
-            onChange={handleChange}
-            className="w-full p-3 border border-gray-300 rounded-lg"
-            placeholder="English (Native), Spanish (Fluent), French (Conversational)"
-          />
-        </div>
-        
-        {/* Submit Button */}
-        <div className="flex justify-end space-x-4 mt-8">
-          <button
-            type="button"
-            onClick={fetchProfile}
-            className="px-6 py-3 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50"
-          >
-            Reset Form
-          </button>
-          <button
-            type="submit"
-            disabled={saving}
-            className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 disabled:opacity-50"
-          >
-            {saving ? 'Saving...' : 'Save Resume Profile'}
-          </button>
-        </div>
+
+        <button type="submit" disabled={saving} className="w-full bg-blue-600 text-white py-4 rounded-xl font-bold text-lg shadow-lg hover:bg-blue-700 disabled:opacity-50 transition-all">
+          {saving ? 'Saving Profile...' : 'Save All Changes'}
+        </button>
       </form>
     </div>
   )

@@ -1,0 +1,165 @@
+<<<<<<< HEAD
+﻿"use client"
+=======
+"use client"
+>>>>>>> db0671d10bff95dc7b80b02569b9c3e73b5d34ea
+
+import { useState, useEffect, FormEvent } from 'react'
+
+interface Experience {
+  id: string
+  jobTitle: string
+  company: string
+}
+
+interface Education {
+  id: string
+  degree: string
+  school: string
+}
+
+export default function ResumeProfilePage() {
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [message, setMessage] = useState<{type: 'success' | 'error', text: string} | null>(null)
+
+  const [formData, setFormData] = useState({
+    phone: '',
+    location: '',
+    website: '',
+    linkedin: '',
+    github: '',
+    professionalSummary: '',
+    skillsInput: '',
+    languagesInput: ''
+  })
+
+  const [experiences, setExperiences] = useState<Experience[]>([])
+  const [education, setEducation] = useState<Education[]>([])
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const res = await fetch('/api/resume/profile')
+        const data = await res.json()
+        if (res.ok && data) {
+          setFormData({
+            phone: data.phone || '',
+            location: data.location || '',
+            website: data.website || '',
+            linkedin: data.linkedin || '',
+            github: data.github || '',
+            professionalSummary: data.professionalSummary || '',
+            skillsInput: Array.isArray(data.skills) ? data.skills.join(', ') : '',
+            languagesInput: Array.isArray(data.languages) ? data.languages.join(', ') : ''
+          })
+          setExperiences(data.workExperience || [])
+          setEducation(data.education || [])
+        }
+      } catch (error) {
+        console.error('Error loading profile:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchProfile()
+  }, [])
+
+  const addExperience = () => setExperiences([...experiences, { id: Date.now().toString(), jobTitle: '', company: '' }])
+  const removeExperience = (id: string) => setExperiences(experiences.filter(exp => exp.id !== id))
+  const addEducation = () => setEducation([...education, { id: Date.now().toString(), degree: '', school: '' }])
+  const removeEducation = (id: string) => setEducation(education.filter(edu => edu.id !== id))
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault()
+    setSaving(true)
+    try {
+      const res = await fetch('/api/resume/profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...formData,
+          skills: formData.skillsInput.split(',').map(s => s.trim()).filter(s => s),
+          languages: formData.languagesInput.split(',').map(l => l.trim()).filter(l => l),
+          workExperience: experiences,
+          education: education
+        })
+      })
+      if (res.ok) setMessage({ type: 'success', text: 'Profile Updated!' })
+    } catch (err) {
+      setMessage({ type: 'error', text: 'Save failed' })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (loading) return <div className="p-20 text-center">Loading Profile...</div>
+
+  return (
+    <div className="max-w-4xl mx-auto p-6 bg-gray-50 min-h-screen">
+      <div className="bg-blue-600 p-8 rounded-t-xl text-white mb-6">
+        <h1 className="text-3xl font-bold">Resume Builder Profile</h1>
+        <p>This is the updated version with Add/Remove buttons.</p>
+      </div>
+
+      {message && (
+        <div className={`p-4 mb-4 rounded ${message.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+          {message.text}
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Contact info */}
+        <div className="bg-white p-6 rounded-lg shadow border">
+          <h2 className="text-xl font-bold mb-4">Contact</h2>
+          <div className="grid grid-cols-2 gap-4">
+            <input className="border p-2 rounded" placeholder="Phone" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
+            <input className="border p-2 rounded" placeholder="Location" value={formData.location} onChange={e => setFormData({...formData, location: e.target.value})} />
+          </div>
+        </div>
+
+        {/* Experience */}
+        <div className="bg-white p-6 rounded-lg shadow border">
+          <div className="flex justify-between mb-4">
+            <h2 className="text-xl font-bold">Work Experience</h2>
+            <button type="button" onClick={addExperience} className="bg-blue-100 text-blue-700 px-3 py-1 rounded font-bold">+ Add</button>
+          </div>
+          {experiences.map((exp, idx) => (
+            <div key={exp.id} className="flex gap-2 mb-2">
+              <input className="border p-2 rounded flex-1" placeholder="Job Title" value={exp.jobTitle} onChange={e => {
+                const newExp = [...experiences]; newExp[idx].jobTitle = e.target.value; setExperiences(newExp);
+              }} />
+              <input className="border p-2 rounded flex-1" placeholder="Company" value={exp.company} onChange={e => {
+                const newExp = [...experiences]; newExp[idx].company = e.target.value; setExperiences(newExp);
+              }} />
+              <button type="button" onClick={() => removeExperience(exp.id)} className="text-red-500 font-bold">X</button>
+            </div>
+          ))}
+        </div>
+
+        {/* Education */}
+        <div className="bg-white p-6 rounded-lg shadow border">
+          <div className="flex justify-between mb-4">
+            <h2 className="text-xl font-bold">Education</h2>
+            <button type="button" onClick={addEducation} className="bg-blue-100 text-blue-700 px-3 py-1 rounded font-bold">+ Add</button>
+          </div>
+          {education.map((edu, idx) => (
+            <div key={edu.id} className="flex gap-2 mb-2">
+              <input className="border p-2 rounded flex-1" placeholder="Degree" value={edu.degree} onChange={e => {
+                const newEdu = [...education]; newEdu[idx].degree = e.target.value; setEducation(newEdu);
+              }} />
+              <input className="border p-2 rounded flex-1" placeholder="School" value={edu.school} onChange={e => {
+                const newEdu = [...education]; newEdu[idx].school = e.target.value; setEducation(newEdu);
+              }} />
+              <button type="button" onClick={() => removeEducation(edu.id)} className="text-red-500 font-bold">X</button>
+            </div>
+          ))}
+        </div>
+
+        <button type="submit" disabled={saving} className="w-full bg-blue-600 text-white p-4 rounded-xl font-bold">
+          {saving ? 'Saving...' : 'Save All Changes'}
+        </button>
+      </form>
+    </div>
+  )
+}
